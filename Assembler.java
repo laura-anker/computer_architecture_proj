@@ -3,7 +3,7 @@ import java.io.FileNotFoundException;
 import java.util.Scanner;
 
 
-public class Assembler{
+public class Assembler {
     public void run(File sourceFile){
         if (pass1(sourceFile) == false){
             //error!
@@ -32,6 +32,7 @@ public class Assembler{
             e.printStackTrace();
             return false;
         }
+    }
 
     //return true if successful, false if error
     public boolean pass2(File sourceFile){

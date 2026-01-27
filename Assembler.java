@@ -14,6 +14,7 @@ public class Assembler {
         return;
     }
 
+    //build label/address map
     //return true if successful, false if error
     public boolean pass1(File sourceFile){
         //set code location to 0
@@ -34,6 +35,7 @@ public class Assembler {
         }
     }
 
+    //use label/address map to generate machine code
     //return true if successful, false if error
     public boolean pass2(File sourceFile){
         //Set code location to 0

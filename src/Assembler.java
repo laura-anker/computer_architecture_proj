@@ -11,9 +11,12 @@ public class Assembler {
 
     public void run(File sourceFile){
         if (pass1(sourceFile) == false){
+            System.out.println("error! exiting pass 1");
             return;//error!
         }
         if (pass2(sourceFile) == false){
+            System.out.println("error! exiting pass 2");
+            return;
             //error!
         }
         return;
@@ -22,15 +25,15 @@ public class Assembler {
     //build label/address map
     //return true if successful, false if error
 
-//start pass 1
+    //start pass 1
     public boolean pass1(File sourceFile){
         //set code location to 0
         int codeLocation = 0;
         //Read a line of the file
 
-//this is the part i was working on, kept the skeleton but updated some work with LOC and DATA
-//wanted to keep the OG for reference        
-/* 
+    //this is the part i was working on, kept the skeleton but updated some work with LOC and DATA
+    //wanted to keep the OG for reference        
+    /* 
         try (Scanner myReader = new Scanner(sourceFile)) { 
             while (myReader.hasNextLine()) {
                 String data = myReader.nextLine();
@@ -59,20 +62,17 @@ public class Assembler {
                 }
                 
             }*/
-//end of reference TRY
+    //end of reference TRY
 
         try (Scanner myReader = new Scanner(sourceFile)) { 
-        while (myReader.hasNextLine()) {
-            String data = myReader.nextLine();
-
+            while (myReader.hasNextLine()) {
+                String data = myReader.nextLine();
                 if (data.isEmpty() || data.startsWith(";")){//if line is empty or comment, move to next line
                     continue;
                 }
-
                 //Use the split command to break the line into parts
                 String[] splitData = data.trim().split("\\s+");
                 int index = 0;//this is to track which field we are working in
-
                 //handle the label
                 if (splitData[index].endsWith(":")){//indicates label, used to define location
                     String label = splitData[index].substring(0, splitData[index].length() - 1);//get label without :
@@ -82,7 +82,6 @@ public class Assembler {
                     }
                     dictionary.put(label, codeLocation);//add label, location pair to dictionary
                     index++;
-
                     //label only line then continue
                     if (index >= splitData.length){
                         continue;
@@ -98,8 +97,12 @@ public class Assembler {
                         System.out.println("Missing operand for LOC");
                         return false;
                     }
-
-                    codeLocation = Integer.parseInt(splitData[index + 1]); //decimal
+                    try {
+                        codeLocation = Integer.parseInt(splitData[index + 1]);
+                    } catch (NumberFormatException e) {
+                        System.out.println("Invalid LOC value: " + splitData[index + 1]);
+                        return false;
+                    }
                     continue; //we do not increment on LOC
                 }
 
@@ -108,13 +111,16 @@ public class Assembler {
                     codeLocation += 1; //allocates one word and update location
                     continue;
                 }
-
                 //otherwise assume instruction generates code
                 codeLocation += 1;
             }
 
         } catch (FileNotFoundException e) {
             System.out.println("An error occurred.");
+            e.printStackTrace();
+            return false;
+        }catch (Exception e) {
+            System.out.println("Unexpected error in pass1:");
             e.printStackTrace();
             return false;
         }
@@ -172,137 +178,133 @@ public class Assembler {
         int codeLocation = 0; // set code location to 0 at start
 
         //Read a line of the file
-        try (Scanner myreader = new Scanner(sourceFile);
+        try (Scanner myreader = new Scanner(sourceFile);//this try automatically closes these when done even if error happens
             PrintWriter listingFile = new PrintWriter("listing.txt");
             PrintWriter loadFile = new PrintWriter("load.txt")) {
-
             // read the file line by line
             while (myreader.hasNextLine()) {
                 String line = myreader.nextLine();
                 if (line.isEmpty() || line.startsWith(";")) {
                     continue; // skip empty lines and comments
                 }// end if
+                //Use the split command to break the line into it parts
+                String[] splitData = line.trim().split("\\s+");
+                int index = 0;
 
-            //Use the split command to break the line into it parts
-            String[] splitData = line.trim().split("\\s+");
-            int index = 0;
+                // handle label field if present
+                if (splitData[index].endsWith(":")) {
+                    index++; // skip label
+                }
 
-            // handle label field if present
-            if (splitData[index].endsWith(":")) {
-                index++; // skip label
-            }
+                if (index >= splitData.length) {
+                    continue; // line only had label
+                }
 
-            if (index >= splitData.length) {
-                continue; // line only had label
-            }
+                String opcodeStr = splitData[index].toUpperCase(); // get opcode
+                index++;
 
-            String opcodeStr = splitData[index].toUpperCase(); // get opcode
-            index++;
-
-            //handle loc
-            if (opcodeStr.equals("LOC")) {
-                if (index < splitData.length) {
-                    codeLocation = Integer.parseInt(splitData[index]);
+                //handle loc
+                if (opcodeStr.equals("LOC")) {
+                    if (index < splitData.length) {
+                        codeLocation = Integer.parseInt(splitData[index]);
+                    }//end if
+                    continue; // loc does not generate code
                 }//end if
-                continue; // loc does not generate code
-            }//end if
-            //handle data
-            else if (opcodeStr.equals("DATA")) {
-                // data n -> generate a word with n
-                int dataValue = 0;
+                //handle data
+                else if (opcodeStr.equals("DATA")) {
+                    // data n -> generate a word with n
+                    int dataValue = 0;
+                    if (index < splitData.length) {
+                        String operand = splitData[index];
+                        // check if operand is a label
+                        if (dictionary.containsKey(operand)) {
+                            dataValue = dictionary.get(operand); // replace with label address
+                        }//end if 
+                        else {
+                            dataValue = Integer.parseInt(operand); // decimal value
+                        }//end else
+                    }//end if
+
+                    // write to listing file in octal
+                    listingFile.printf("%06o  %06o  %s%n", codeLocation, dataValue, line);
+                    // write to load file in octal
+                    loadFile.printf("%06o  %06o%n", codeLocation, dataValue);
+                    codeLocation++; // increment location
+                    continue;
+                }//end else if
+
+                // look up opcode in the map
+                Integer opcode = opcodeMap.get(opcodeStr);
+                if (opcode == null) {
+                    System.out.println("unknown instruction: " + opcodeStr);
+                    listingFile.close();//not sure if closes are necessary?
+                    loadFile.close();
+                    return false; // stop if invalid opcode
+                }//end if
+
+                // default fields
+                int r = 0, ix = 0, i = 0, address = 0;
+                
+                // parse operands if present
+                if (index < splitData.length) {
+                    String rStr = splitData[index];
+                    if (rStr.startsWith("R")) {
+                        r = Integer.parseInt(rStr.substring(1));
+                        index++;
+                    }//end if
+                }//end if
+
+                if (index < splitData.length) {
+                    String ixStr = splitData[index];
+                    if (ixStr.startsWith("X")) {
+                        ix = Integer.parseInt(ixStr.substring(1));
+                        index++;
+                    }//end if
+                }//end if
+
                 if (index < splitData.length) {
                     String operand = splitData[index];
+                    // check for indirect addressing
+                    if (operand.startsWith("@")) {
+                        i = 1;
+                        operand = operand.substring(1);
+                    }//end if
+
                     // check if operand is a label
                     if (dictionary.containsKey(operand)) {
-                        dataValue = dictionary.get(operand); // replace with label address
-                    }//end if 
+                        address = dictionary.get(operand);
+                    } //end if
+
                     else {
-                        dataValue = Integer.parseInt(operand); // decimal value
+                        address = Integer.parseInt(operand); // decimal value
                     }//end else
                 }//end if
 
-                // write to listing file in octal
-                listingFile.printf("%06o  %06o  %s%n", codeLocation, dataValue, line);
-                // write to load file in octal
-                loadFile.printf("%06o  %06o%n", codeLocation, dataValue);
+                //build our 16-bit instruction
+                int instruction = (opcode << 10) | (r << 8) | (ix << 6) | (i << 5) | (address & 0x1F);
+                // write listing file in octal
+                listingFile.printf("%06o  %06o  %s%n", codeLocation, instruction, line);
+                // write load file in octal
+                loadFile.printf("%06o  %06o%n", codeLocation, instruction);
                 codeLocation++; // increment location
-                continue;
-            }//end else if
+            }//end while
 
-            // look up opcode in the map
-            Integer opcode = opcodeMap.get(opcodeStr);
-            if (opcode == null) {
-                System.out.println("unknown instruction: " + opcodeStr);
-                return false; // stop if invalid opcode
-            }//end if
+        } //end try
 
-            // default fields
-            int r = 0, ix = 0, i = 0, address = 0;
-            
-            // parse operands if present
-            if (index < splitData.length) {
-                String rStr = splitData[index];
-                if (rStr.startsWith("R")) {
-                    r = Integer.parseInt(rStr.substring(1));
-                    index++;
-                }//end if
-            }//end if
+        catch (FileNotFoundException e) { //error handling in reading file
+            System.out.println("an error occurred reading the file");
+            e.printStackTrace();
+            return false;
 
-            if (index < splitData.length) {
-                String ixStr = splitData[index];
-                if (ixStr.startsWith("X")) {
-                    ix = Integer.parseInt(ixStr.substring(1));
-                    index++;
-                }//end if
-            }//end if
+        } //end catch 
 
-            if (index < splitData.length) {
-                String operand = splitData[index];
-                // check for indirect addressing
-                if (operand.startsWith("@")) {
-                    i = 1;
-                    operand = operand.substring(1);
-                }//end if
-
-                // check if operand is a label
-                if (dictionary.containsKey(operand)) {
-                    address = dictionary.get(operand);
-                } //end if
-
-                else {
-                    address = Integer.parseInt(operand); // decimal value
-                }//end else
-            }//end if
-
-
-            //build our 16-bit instruction
-            int instruction = (opcode << 10) | (r << 8) | (ix << 6) | (i << 5) | (address & 0x1F);
-
-            // write listing file in octal
-            listingFile.printf("%06o  %06o  %s%n", codeLocation, instruction, line);
-
-            // write load file in octal
-            loadFile.printf("%06o  %06o%n", codeLocation, instruction);
-
-            codeLocation++; // increment location
-        }//end while
-
-    } //end try
-
-    catch (FileNotFoundException e) { //error handling in reading file
-        System.out.println("an error occurred reading the file");
-        e.printStackTrace();
-        return false;
-
-    } //end catch 
-
-    catch (NumberFormatException e) { //error handling in source
-        System.out.println("invalid number in source file");
-        e.printStackTrace();
-        return false;
-    }//end catch 
-
-    return true;
+        catch (NumberFormatException e) { //error handling in source
+            System.out.println("invalid number in source file");
+            e.printStackTrace(); 
+            return false;
+        }//end catch 
+        
+        return true;
     }
 //end pass 2
 

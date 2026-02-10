@@ -133,6 +133,7 @@ public class Assembler {
 
 //start opcode map
     Map<String, Integer> opcodeMap = new HashMap<>();
+    //ALL VALUES STORED IN DECIMAL! Shifted later to create octal output
     public Assembler(){
         opcodeMap.put("HLT", 0);   // stop machine
         opcodeMap.put("LDR", 1);   // load register from memory
@@ -142,32 +143,32 @@ public class Assembler {
         opcodeMap.put("SMR", 5);   // subtract memory from register
         opcodeMap.put("AIR", 6);   // add immediate to register
         opcodeMap.put("SIR", 7);   // subtract immediate from register
-        opcodeMap.put("JZ", 10);   // jump if zero
-        opcodeMap.put("JNE", 11);  // jump if not equal
-        opcodeMap.put("JCC", 12);  // jump if condition code
-        opcodeMap.put("JMA", 13);  // unconditional jump
-        opcodeMap.put("JSR", 14);  // jump and save return address
-        opcodeMap.put("RFS", 15);  // return from subroutine
-        opcodeMap.put("SOB", 16);  // subtract one and branch
-        opcodeMap.put("JGE", 17);  // jump greater than or equal to
+        opcodeMap.put("JZ", 8);   // jump if zero
+        opcodeMap.put("JNE", 9);  // jump if not equal
+        opcodeMap.put("JCC", 10);  // jump if condition code
+        opcodeMap.put("JMA", 11);  // unconditional jump
+        opcodeMap.put("JSR", 12);  // jump and save return address
+        opcodeMap.put("RFS", 13);  // return from subroutine
+        opcodeMap.put("SOB", 14);  // subtract one and branch
+        opcodeMap.put("JGE", 15);  // jump greater than or equal to
 
-        opcodeMap.put("TRAP", 30); // trap instruction
-        opcodeMap.put("SRC", 31);  // shift register by count
-        opcodeMap.put("RRC", 32);  // rotate register by count
+        opcodeMap.put("TRAP", 24); // trap instruction
+        opcodeMap.put("SRC", 25);  // shift register by count
+        opcodeMap.put("RRC", 26);  // rotate register by count
 
-        opcodeMap.put("LDX", 41);  // load index register from memory
-        opcodeMap.put("STX", 42);  // store index register to memory
+        opcodeMap.put("LDX", 33);  // load index register from memory
+        opcodeMap.put("STX", 34);  // store index register to memory
 
-        opcodeMap.put("IN", 61);   // input character to register
-        opcodeMap.put("OUT", 62);  // output character from register
-        opcodeMap.put("CHK", 63);  // check device status to register
+        opcodeMap.put("IN", 49);   // input character to register
+        opcodeMap.put("OUT", 50);  // output character from register
+        opcodeMap.put("CHK", 51);  // check device status to register
 
-        opcodeMap.put("MLT", 70);  // multiply register by register
-        opcodeMap.put("DVD", 71);  // divide register by register
-        opcodeMap.put("TRR", 72);  // test equality of register and register
-        opcodeMap.put("AND", 73);  // logical and register with register
-        opcodeMap.put("ORR", 74);  // logical or register with register
-        opcodeMap.put("NOT", 75);  // logical not of register
+        opcodeMap.put("MLT", 56);  // multiply register by register
+        opcodeMap.put("DVD", 57);  // divide register by register
+        opcodeMap.put("TRR", 58);  // test equality of register and register
+        opcodeMap.put("AND", 59);  // logical and register with register
+        opcodeMap.put("ORR", 60);  // logical or register with register
+        opcodeMap.put("NOT", 61);  // logical not of register
     }
 //end opcode map
 
@@ -183,12 +184,22 @@ public class Assembler {
             PrintWriter loadFile = new PrintWriter("load.txt")) {
             // read the file line by line
             while (myreader.hasNextLine()) {
-                String line = myreader.nextLine();
-                if (line.isEmpty() || line.startsWith(";")) {
-                    continue; // skip empty lines and comments
-                }// end if
+                String originalLine = myreader.nextLine();
+                String line = originalLine;
+
+                // strip comments for parsing
+                int commentPos = line.indexOf(';');
+                if (commentPos != -1) {
+                    line = line.substring(0, commentPos);
+                }
+                //skip empty lines
+                if (line.trim().isEmpty()) {
+                    continue;
+                }
+
+
                 //Use the split command to break the line into it parts
-                String[] splitData = line.trim().split("\\s+");
+                String[] splitData = line.trim().split("[\\s,]+");
                 int index = 0;
 
                 // handle label field if present
@@ -207,6 +218,8 @@ public class Assembler {
                 if (opcodeStr.equals("LOC")) {
                     if (index < splitData.length) {
                         codeLocation = Integer.parseInt(splitData[index]);
+                        listingFile.printf("                %s%n", originalLine);//print line listing file only
+                    
                     }//end if
                     continue; // loc does not generate code
                 }//end if
@@ -226,12 +239,12 @@ public class Assembler {
                     }//end if
 
                     // write to listing file in octal
-                    listingFile.printf("%06o  %06o  %s%n", codeLocation, dataValue, line);
+                    listingFile.printf("%06o  %06o  %s%n", codeLocation, dataValue, originalLine);
                     // write to load file in octal
                     loadFile.printf("%06o  %06o%n", codeLocation, dataValue);
                     codeLocation++; // increment location
                     continue;
-                }//end else if
+                }
 
                 // look up opcode in the map
                 Integer opcode = opcodeMap.get(opcodeStr);
@@ -244,46 +257,37 @@ public class Assembler {
 
                 // default fields
                 int r = 0, ix = 0, i = 0, address = 0;
+                // zero-operand instructions
+                if (opcodeStr.equals("HLT")) {
+                    // all fields stay 0
+                }else if (opcodeStr.equals("LDX") || opcodeStr.equals("STX")) {
+                    // LDX ix,address
+                    ix = Integer.parseInt(splitData[index]);
+                    address = Integer.parseInt(splitData[index + 1]);
+                }
+                else {
+                    // r,ix,address[,i]
+                    r = Integer.parseInt(splitData[index]);
+                    ix = Integer.parseInt(splitData[index + 1]);
+                    address = Integer.parseInt(splitData[index + 2]);
+
+                    if (index + 3 < splitData.length) {
+                        i = Integer.parseInt(splitData[index + 3]);
+                        if (i != 0 && i != 1) {
+                            System.out.println("invalid indirect bit");
+                            return false;
+                        }
+                    }
+
+                }
                 
-                // parse operands if present
-                if (index < splitData.length) {
-                    String rStr = splitData[index];
-                    if (rStr.startsWith("R")) {
-                        r = Integer.parseInt(rStr.substring(1));
-                        index++;
-                    }//end if
-                }//end if
-
-                if (index < splitData.length) {
-                    String ixStr = splitData[index];
-                    if (ixStr.startsWith("X")) {
-                        ix = Integer.parseInt(ixStr.substring(1));
-                        index++;
-                    }//end if
-                }//end if
-
-                if (index < splitData.length) {
-                    String operand = splitData[index];
-                    // check for indirect addressing
-                    if (operand.startsWith("@")) {
-                        i = 1;
-                        operand = operand.substring(1);
-                    }//end if
-
-                    // check if operand is a label
-                    if (dictionary.containsKey(operand)) {
-                        address = dictionary.get(operand);
-                    } //end if
-
-                    else {
-                        address = Integer.parseInt(operand); // decimal value
-                    }//end else
-                }//end if
 
                 //build our 16-bit instruction
                 int instruction = (opcode << 10) | (r << 8) | (ix << 6) | (i << 5) | (address & 0x1F);
+                //int instruction = (opcode << 11) | (r << 9) | (ix << 7) | (i << 6) | (address & 0x7F);
+
                 // write listing file in octal
-                listingFile.printf("%06o  %06o  %s%n", codeLocation, instruction, line);
+                listingFile.printf("%06o  %06o  %s%n", codeLocation, instruction, originalLine);
                 // write load file in octal
                 loadFile.printf("%06o  %06o%n", codeLocation, instruction);
                 codeLocation++; // increment location

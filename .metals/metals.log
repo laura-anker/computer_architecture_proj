@@ -153,3 +153,47 @@ INFO: Unsupported notification method: $/setTrace
 2026.02.13 22:46:55 INFO  time: code lens generation in 3.35s
 2026.02.13 22:47:09 INFO  no build target found for C:\Users\genny\Desktop\computer_architecture_proj\src\Assembler.java. Using fallback presentation compiler.
 2026.02.13 22:47:37 INFO  no build target found for C:\Users\genny\Desktop\computer_architecture_proj\src\Assembler.java. Using fallback presentation compiler.
+2026.02.13 22:47:45 INFO  no build target found for C:\Users\genny\Desktop\computer_architecture_proj\src\Assembler.java. Using fallback presentation compiler.
+2026.02.13 22:51:56 INFO  no build target found for C:\Users\genny\Desktop\computer_architecture_proj\src\Assembler.java. Using fallback presentation compiler.
+Feb 13, 2026 10:51:57 PM org.eclipse.lsp4j.jsonrpc.RemoteEndpoint handleNotification
+WARNING: Notification threw an exception: {
+  "jsonrpc": "2.0",
+  "method": "metals/didFocusTextDocument",
+  "params": [
+    "class:/c%3A/Users/genny/Desktop/computer_architecture_proj/src/Assembler.class"
+  ]
+}
+java.nio.file.FileSystemNotFoundException: Provider "class" not installed
+	at java.base/java.nio.file.Path.of(Path.java:210)
+	at java.base/java.nio.file.Paths.get(Paths.java:95)
+	at scala.meta.internal.mtags.MtagsEnrichments$XtensionURIMtags.toAbsolutePath(MtagsEnrichments.scala:149)
+	at scala.meta.internal.mtags.MtagsEnrichments$XtensionStringMtags.toAbsolutePath(MtagsEnrichments.scala:209)
+	at scala.meta.internal.metals.MetalsEnrichments$XtensionString.toAbsolutePath(MetalsEnrichments.scala:778)
+	at scala.meta.internal.metals.MetalsEnrichments$XtensionString.toAbsolutePath(MetalsEnrichments.scala:775)
+	at scala.meta.internal.metals.WorkspaceLspService.didFocus(WorkspaceLspService.scala:808)
+	at scala.meta.metals.lsp.DelegatingScalaService.didFocus(DelegatingScalaService.scala:42)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:104)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:565)
+	at org.eclipse.lsp4j.jsonrpc.services.GenericEndpoint.lambda$recursiveFindRpcMethods$0(GenericEndpoint.java:65)
+	at org.eclipse.lsp4j.jsonrpc.services.GenericEndpoint.notify(GenericEndpoint.java:160)
+	at org.eclipse.lsp4j.jsonrpc.RemoteEndpoint.handleNotification(RemoteEndpoint.java:231)
+	at org.eclipse.lsp4j.jsonrpc.RemoteEndpoint.consume(RemoteEndpoint.java:198)
+	at org.eclipse.lsp4j.jsonrpc.json.StreamMessageProducer.handleMessage(StreamMessageProducer.java:185)
+	at org.eclipse.lsp4j.jsonrpc.json.StreamMessageProducer.listen(StreamMessageProducer.java:97)
+	at org.eclipse.lsp4j.jsonrpc.json.ConcurrentMessageProcessor.run(ConcurrentMessageProcessor.java:114)
+	at java.base/java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:545)
+	at java.base/java.util.concurrent.FutureTask.run(FutureTask.java:328)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1090)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:614)
+	at java.base/java.lang.Thread.run(Thread.java:1474)
+
+2026.02.13 22:52:05 WARN  no build target for: C:\Users\genny\Desktop\computer_architecture_proj\src\Assembler.java
+2026.02.13 22:52:05 INFO  no build target found for C:\Users\genny\Desktop\computer_architecture_proj\src\Assembler.java. Using fallback presentation compiler.
+2026.02.13 22:52:06 INFO  no build target found for C:\Users\genny\Desktop\computer_architecture_proj\src\Assembler.java. Using fallback presentation compiler.
+Feb 13, 2026 10:52:06 PM org.eclipse.lsp4j.jsonrpc.RemoteEndpoint handleCancellation
+WARNING: Unmatched cancel notification for request id 20
+2026.02.13 22:52:06 INFO  no build target found for C:\Users\genny\Desktop\computer_architecture_proj\src\Assembler.java. Using fallback presentation compiler.
+2026.02.13 22:54:38 INFO  no build target found for C:\Users\genny\Desktop\computer_architecture_proj\src\Assembler.java. Using fallback presentation compiler.
+2026.02.13 22:54:45 INFO  no build target found for C:\Users\genny\Desktop\computer_architecture_proj\src\Assembler.java. Using fallback presentation compiler.
+2026.02.13 22:54:45 INFO  no build target found for C:\Users\genny\Desktop\computer_architecture_proj\src\Assembler.java. Using fallback presentation compiler.
+2026.02.13 23:05:40 INFO  no build target found for C:\Users\genny\Desktop\computer_architecture_proj\src\Assembler.java. Using fallback presentation compiler.

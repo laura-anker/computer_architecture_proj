@@ -1,5 +1,7 @@
 # computer_architecture_proj
 
+Note for running the code from this folder using the .jar file. The source.txt file must be in the same directory
+
 # Part 0, due 2/9:
 
 - Your assembler, packaged as a JAR file

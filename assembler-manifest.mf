@@ -1,2 +1,5 @@
 Main-Class: Assembler
+<<<<<<< HEAD
 
+=======
+>>>>>>> 5a25c45 (Update with:  assembler JAR, source, listing, load, documentation)

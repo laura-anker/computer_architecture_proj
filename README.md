@@ -9,6 +9,7 @@ To create
 - Implement a simple memory
 - Execute Load and Store instructions
 - Build initial user interface to simulator
+  
 To submit
 - Your simulator, packaged as a JAR file.
 - Simple documentation describing how to use your simulator, what the console layout is and how to operate it.

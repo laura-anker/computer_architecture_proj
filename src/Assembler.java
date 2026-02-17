@@ -31,39 +31,6 @@ public class Assembler {
         int codeLocation = 0;
         //Read a line of the file
 
-    //this is the part i was working on, kept the skeleton but updated some work with LOC and DATA
-    //wanted to keep the OG for reference        
-    /* 
-        try (Scanner myReader = new Scanner(sourceFile)) { 
-            while (myReader.hasNextLine()) {
-                String data = myReader.nextLine();
-                
-                if (data.isEmpty() || data.startsWith(";")){//if line is empty or comment, move to next line
-                    continue;
-                }
-
-                //Use the split command to break the line into up to 4 parts based on one or more spaces
-                String[] splitData = data.trim().split("\\s+");
-
-                int val = 0;
-                if (splitData[0].endsWith(":")){//indicates label, used to define location
-                    String label = splitData[0].substring(0, splitData[0].length() - 1);//get label without :
-                    if (dictionary.containsKey(label)){//error if label is duplicated
-                        System.out.println("Duplicate label: "+label);
-                        return false;
-                    }
-                    dictionary.put(label, codeLocation);//add labal, location pair to dictionary
-                    val = 1;
-                }
-
-                //check for code or data generated after label (don't increment if there's not)
-                if (val < splitData.length){
-                    codeLocation+=1; //increment location if code is generated
-                }
-                
-            }*/
-    //end of reference TRY
-
         try (Scanner myReader = new Scanner(sourceFile)) { 
             while (myReader.hasNextLine()) {
                 String data = myReader.nextLine();
@@ -320,8 +287,3 @@ public class Assembler {
 //end main
 
 }//end public class assembler
-
-// added main inside the class
-// had to fix some typos like data.data
-//changed object creation
-//added a return in pass two 

@@ -1,6 +1,6 @@
 # computer_architecture_proj
 
-Note for running the code from this folder using the .jar file. The source.txt file must be in the same directory
+Important note for working on Part 1 - You must compile and run from the src file using commands "javac simulator/Main.java" and "java simulator/Main". Sometimes you might need to recompile an individual file and you should also do this from src like "javac simulator/io/ProgramLoader.java" or it will get confused and won't let you compile.
 
 # Part 1, due 2/28:
 

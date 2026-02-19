@@ -23,12 +23,12 @@ public class Simulator {
         cpu.getRegisters().PC.set(start);
 
 
-
+        //currently hard coded for testing
         singleStep();
         singleStep();
     }
 
-    public void singleStep() {
+    public void singleStep() { //executes and prints one cycle from cpu
         cpu.cycle();
         cpu.printState();
     }

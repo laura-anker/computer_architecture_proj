@@ -3,14 +3,14 @@ package simulator.cpu;
 import simulator.memory.Memory;
 import simulator.registers.RegisterFile;
 import simulator.instruction.Instruction;
-//for execution
+//for execution (fetch decode execute)
 public class CPU {
 
-    private Memory memory;
-    private RegisterFile registers;
+    private Memory memory; //holds instructions and data
+    private RegisterFile registers; //holds all registers
 
-    private InstructionDecoder decoder;
-    private InstructionExecutor executor;
+    private InstructionDecoder decoder; //coverts binary to instruction
+    private InstructionExecutor executor; //interacts with registers and memory to complete instruction
 
     public CPU(Memory memory) {
         this.memory = memory;
@@ -24,7 +24,7 @@ public class CPU {
         return registers;
     }
 
-    public void cycle() {
+    public void cycle() { //individually calls stages of the cycle
 
         fetch();
 
@@ -38,24 +38,26 @@ public class CPU {
 
     private void fetch() {
 
-        registers.MAR.set(registers.PC.get());
+        registers.MAR.set(registers.PC.get()); //mem addr reg points to next instruction
 
-        short word = memory.read(registers.MAR.get());
-        registers.MBR.set(word);
+        short word = memory.read(registers.MAR.get()); //read the instruction
+        registers.MBR.set(word); //store it in the memory buffer reg
 
-        registers.IR.set(word);
+        registers.IR.set(word); //copy into instruction register and store for decoding
 
-        registers.PC.set(registers.PC.get() + 1);
+        registers.PC.set(registers.PC.get() + 1); //incremend pc to get ready for the next instruction
     }
 
     private Instruction decode() {
-        return decoder.decode((short) registers.IR.get());
+        return decoder.decode((short) registers.IR.get()); //turns binary from IR to the instruction object to use in execute
     }
 
+    //To do
     private boolean execute(Instruction inst) {
-        return executor.execute(inst);
+        return executor.execute(inst); 
     }
 
+    //should extend to print all registers so we can debug if needed
     public void printState() {
         System.out.println("PC=" + registers.PC.get()
                 + " R0=" + registers.GPR[0].get());

@@ -18,12 +18,13 @@ public class InstructionExecutor {
         this.eaCalc = new EffectiveAddressCalculator();
     }
 
+    //todo finish adding opcode instructions for each case
     public boolean execute(Instruction inst) {
-
-        switch (inst.opcode) {
+    
+        switch (inst.opcode) {//check opcode for instruction
 
             case Opcode.LDR:
-                executeLDR(inst);
+                executeLDR(inst); //calls methos
                 break;
 
             case Opcode.HLT:
@@ -33,11 +34,12 @@ public class InstructionExecutor {
         return true;
     }
 
+    //to do, make each instrction from the cases
     private void executeLDR(Instruction inst) {
 
-        int ea = eaCalc.computeEA(inst, regs, memory);
-        int value = memory.read(ea);
+        int ea = eaCalc.computeEA(inst, regs, memory); //take address, add index reg if any, checks indirect mem
+        int value = memory.read(ea); //reads word at effective address from mem
 
-        regs.getGPR(inst.r).set(value);
+        regs.getGPR(inst.r).set(value); //write val into general purpose register
     }
 }

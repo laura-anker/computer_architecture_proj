@@ -17,18 +17,18 @@ public class ProgramLoader {
             while ((line = br.readLine()) != null) {
                 line = line.trim();
                 if (line.isEmpty())
-                    continue;
+                    continue; //skip empyt lines
                 String[] parts = line.split("\\s+");
                 if (parts.length < 2)
-                    continue;
+                    continue; //split into address and value fields
                 try {
                     int address = Integer.parseInt(parts[0], 8);
                     int value   = Integer.parseInt(parts[1], 8);
 
-                    memory.write(address, (short) value);
+                    memory.write(address, (short) value); //store word in memory simulation at address
 
                     if (firstAddress == -1)
-                        firstAddress = address;
+                        firstAddress = address; //tracks first mem loc loaded
                     System.out.println("Loaded @" + parts[0] + " = " + parts[1]);
 
                 } catch (NumberFormatException e) {

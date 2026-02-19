@@ -2,6 +2,8 @@
 
 Important note for working on Part 1 - You must compile and run from the src file using commands "javac simulator/Main.java" and "java simulator/Main". Sometimes you might need to recompile an individual file and you should also do this from src like "javac simulator/io/ProgramLoader.java" or it will get confused and won't let you compile.
 
+Adding to this note for details - When we complie, we must be in the directory right above our top level package. The package in this case is our simulator that is within the src folder. Java is building class files based on current directory, so if we are not in the src file, the class files are created in the wrong location, and then at runtime they are unable to be found. For this same reason the individual files have to be compiled in the same way. 
+
 # Part 1, due 2/28:
 
 To create

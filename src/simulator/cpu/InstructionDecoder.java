@@ -1,6 +1,6 @@
 package simulator.cpu;
 
-//extracts feilds from instruction
+//extracts fields from instruction
 import simulator.instruction.Instruction;
 
 public class InstructionDecoder {

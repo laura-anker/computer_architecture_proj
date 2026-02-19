@@ -1,3 +1,4 @@
+package simulator.registers;
 public class ConditionCode {
     boolean overflow;
     boolean underflow;

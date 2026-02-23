@@ -25,12 +25,20 @@ public class CPU {
     }
 
     public void cycle() { //individually calls stages of the cycle
+        System.out.println(
+            "PC BEFORE FETCH = " +
+            Integer.toOctalString(registers.PC.get())
+        );
 
         fetch();
 
         Instruction inst = decode();
 
         boolean cont = execute(inst);
+        System.out.println(
+            "PC AFTER EXECUTE = " +
+            Integer.toOctalString(registers.PC.get())
+        );
 
         if (!cont)
             System.out.println("HALT encountered.");
@@ -59,7 +67,10 @@ public class CPU {
 
     //should extend to print all registers so we can debug if needed
     public void printState() {
-        System.out.println("PC=" + registers.PC.get()
-                + " R0=" + registers.GPR[0].get());
+    System.out.print("PC=" + Integer.toOctalString(registers.PC.get()));
+    for(int i=0; i<registers.GPR.length; i++){
+        System.out.print(" R" + i + "=" + registers.GPR[i].get());
     }
+    System.out.println();
+}
 }

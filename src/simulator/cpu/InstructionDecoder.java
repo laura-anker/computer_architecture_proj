@@ -7,11 +7,13 @@ public class InstructionDecoder {
 
     public Instruction decode(short word) {
 
-        int opcode = (word >> 10) & 0x3F;
-        int r = (word >> 8) & 0x3;
-        int ix = (word >> 6) & 0x3;
-        int i = (word >> 5) & 0x1;
-        int address = word & 0x1F;
+        int w = word & 0xFFFF;   //unsigned
+
+        int opcode  = (w >> 10) & 0x3F;
+        int r       = (w >> 8)  & 0x3;
+        int ix      = (w >> 6)  & 0x3;
+        int i       = (w >> 5)  & 0x1;
+        int address =  w        & 0x1F;
 
         return new Instruction(opcode, r, ix, i, address);
     }

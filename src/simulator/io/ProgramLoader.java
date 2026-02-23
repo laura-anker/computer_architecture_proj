@@ -12,30 +12,41 @@ public class ProgramLoader {
         try (BufferedReader br = new BufferedReader(new FileReader(filename))) {
 
             String line;
-            int firstAddress = -1;
+            int startAddress = -1;
 
             while ((line = br.readLine()) != null) {
                 line = line.trim();
                 if (line.isEmpty())
-                    continue; //skip empyt lines
+                    continue;
+
                 String[] parts = line.split("\\s+");
                 if (parts.length < 2)
-                    continue; //split into address and value fields
+                    continue;
+
                 try {
                     int address = Integer.parseInt(parts[0], 8);
                     int value   = Integer.parseInt(parts[1], 8);
 
-                    memory.write(address, (short) value); //store word in memory simulation at address
+                    memory.write(address, (short) value);
 
-                    if (firstAddress == -1)
-                        firstAddress = address; //tracks first mem loc loaded
                     System.out.println("Loaded @" + parts[0] + " = " + parts[1]);
+
+                    // -------- NEW LOGIC --------
+                    int opcode = (value >> 10) & 0x3F;
+
+                    // first real instruction
+                    // instruction words in this ISA are >= 0100000 (octal)
+                    if (startAddress == -1 && value >= 0100000) {
+                        startAddress = address;
+                    }
+                    // ---------------------------
 
                 } catch (NumberFormatException e) {
                     e.printStackTrace();
                 }
             }
-            return firstAddress;
+
+            return startAddress;
 
         } catch (Exception e) {
             e.printStackTrace();

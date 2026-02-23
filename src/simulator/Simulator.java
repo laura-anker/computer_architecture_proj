@@ -20,6 +20,7 @@ public class Simulator {
 
         ProgramLoader loader = new ProgramLoader();
         int start = loader.load("programs/load.txt", memory);
+        System.out.println("Start address (octal)= "+Integer.toOctalString(start));
         cpu.getRegisters().PC.set(start);
 
 

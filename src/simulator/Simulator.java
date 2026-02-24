@@ -17,9 +17,10 @@ public class Simulator {
     }
 
     public void start() {
-
+        //load load file, can edit to other file name
         ProgramLoader loader = new ProgramLoader();
         int start = loader.load("programs/test_load_part1.txt", memory);
+        //print statement just for debugging
         System.out.println("Start address (octal)= "+Integer.toOctalString(start));
         cpu.getRegisters().PC.set(start);
 

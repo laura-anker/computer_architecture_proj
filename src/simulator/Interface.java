@@ -14,7 +14,18 @@ public class Interface extends JFrame {
     private JTextArea cacheArea, printerArea;
     private JTextField consoleInputField, programFileField;
 
+    // simulator backend
+    private simulator.memory.Memory memory;
+    private simulator.cpu.CPU cpu;
+    private simulator.io.ProgramLoader loader;
+
     public Interface() {
+
+        // create simulator backend
+        memory = new simulator.memory.Memory();
+        cpu = new simulator.cpu.CPU(memory);
+        loader = new simulator.io.ProgramLoader();
+        
         setTitle("CSCI 6461 Machine Simulator");
         setSize(1200, 700);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -144,12 +155,22 @@ public class Interface extends JFrame {
     private JPanel createButtonPanel() {
         JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT));
 
-        String[] labels = {"Load", "Load+", "Store", "Store+", "Run", "Step", "Halt"};
-        for (String label : labels) {
-            panel.add(new JButton(label));
-        }
+        JButton loadBtn = new JButton("Load");
+        JButton runBtn  = new JButton("Run");
+        JButton stepBtn = new JButton("Step");
+        JButton haltBtn = new JButton("Halt");
+
+        panel.add(loadBtn);
+        panel.add(runBtn);
+        panel.add(stepBtn);
+        panel.add(haltBtn);
 
         panel.add(createIPLIndicator());
+
+        //add button actions
+        loadBtn.addActionListener(e -> loadProgram());
+        stepBtn.addActionListener(e -> stepCPU());
+        runBtn.addActionListener(e -> runCPU());
 
         return panel;
     }
@@ -227,4 +248,70 @@ public class Interface extends JFrame {
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> new Interface().setVisible(true));
     }
+
+    //copies register values to GUI fields
+    private void refreshGUI() {
+
+        var regs = cpu.getRegisters();
+
+        // GPRs
+        for (int i = 0; i < 4; i++) {
+            gprFields[i].setText(
+                Integer.toOctalString(regs.GPR[i].get())
+            );
+        }
+
+        // IX registers (1–3)
+        for (int i = 1; i <= 3; i++) {
+            ixrFields[i].setText(
+                Integer.toOctalString(regs.IX[i].get())
+            );
+        }
+
+        pcField.setText(Integer.toOctalString(regs.PC.get()));
+        marField.setText(Integer.toOctalString(regs.MAR.get()));
+        mbrField.setText(Integer.toOctalString(regs.MBR.get()));
+        irField.setText(Integer.toOctalString(regs.IR.get()));
+    }
+
+    private void loadProgram() {
+
+        try {
+            String file = programFileField.getText();
+
+            int start = loader.load(file, memory);
+
+            cpu.getRegisters().PC.set(start);
+
+            refreshGUI();
+
+            printerArea.append("Program loaded. Start = "
+                    + Integer.toOctalString(start) + "\n");
+
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+
+    private void stepCPU() {
+
+        cpu.cycle();
+        refreshGUI();
+    }
+
+    private void runCPU() {
+
+        new Thread(() -> {
+            while (true) {
+
+                cpu.cycle();
+
+                SwingUtilities.invokeLater(this::refreshGUI);
+
+                try {
+                    Thread.sleep(400); // slow animation
+                } catch (InterruptedException ignored) {}
+            }
+        }).start();
+}
 }

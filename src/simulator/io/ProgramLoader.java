@@ -36,7 +36,7 @@ public class ProgramLoader {
 
                     // first real instruction
                     // instruction words in this ISA are >= 0100000 (octal)
-                    if (startAddress == -1 && value >= 0100000) {
+                    if (startAddress == -1) {
                         startAddress = address;
                     }
                     // ---------------------------

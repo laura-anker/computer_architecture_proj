@@ -1,0 +1,50 @@
+; ==========================================
+; IPL DEMONSTRATION PROGRAM
+; Shows all addressing modes for LOAD/STORE
+; ==========================================
+
+LOC 20            ; Program starts at location 20
+
+; -------- LOAD TESTS --------
+
+LDR 0,0,60        ; Direct:   R0 <- M[60]
+                  ; Expect R0 = 5
+
+LDR 1,1,60        ; Indexed:  R1 <- M[60 + X1]
+                  ; X1 = 1 → uses location 61
+                  ; Expect R1 = 12
+
+LDR 2,0,70,1      ; Indirect: R2 <- M[ M[70] ]
+                  ; M[70] = 60
+                  ; Expect R2 = 5
+
+; -------- STORE TESTS --------
+
+STR 0,0,100       ; Direct store
+                  ; M[100] <- R0
+
+STR 1,1,100       ; Indexed store
+                  ; M[101] <- R1
+
+; -------- HALT --------
+
+End: HLT          ; Stop execution
+
+
+; ==========================================
+; DATA SECTION
+; ==========================================
+
+LOC 60            ; Data values
+
+Data 5            ; location 60
+Data 12           ; location 61
+
+; pointer for indirect addressing
+LOC 70
+Data 60           ; points to address 60
+
+; result storage
+LOC 100
+Data 0            ; result location
+Data 0

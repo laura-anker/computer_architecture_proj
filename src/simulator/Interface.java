@@ -54,9 +54,31 @@ public class Interface extends JFrame {
 
         left.add(new JLabel("GPR"));
         for (int i = 0; i < 4; i++) {
+            int regIndex = i; // required for lambda capture
+
             JPanel row = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
+
             gprFields[i] = new JTextField(8);
             JButton btn = new JButton("R" + i);
+
+            // LOAD BUTTON ACTION
+            btn.addActionListener(e -> {
+                try {
+                    int value = Integer.parseInt(
+                        gprFields[regIndex].getText(), 8); // octal input
+
+                    cpu.getRegisters().GPR[regIndex].set(value);
+
+                    refreshGUI();
+
+                } catch (NumberFormatException ex) {
+                    JOptionPane.showMessageDialog(
+                        this,
+                        "Invalid octal value for R" + regIndex
+                    );
+                }
+            });
+
             row.add(new JLabel("" + i));
             row.add(gprFields[i]);
             row.add(btn);
@@ -66,9 +88,31 @@ public class Interface extends JFrame {
         left.add(Box.createVerticalStrut(10));
         left.add(new JLabel("IXR"));
         for (int i = 1; i <= 3; i++) {
+
+            int regIndex = i;
+
             JPanel row = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
+
             ixrFields[i] = new JTextField(8);
             JButton btn = new JButton("X" + i);
+
+            btn.addActionListener(e -> {
+                try {
+                    int value = Integer.parseInt(
+                        ixrFields[regIndex].getText(), 8);
+
+                    cpu.getRegisters().IX[regIndex].set(value);
+
+                    refreshGUI();
+
+                } catch (NumberFormatException ex) {
+                    JOptionPane.showMessageDialog(
+                        this,
+                        "Invalid octal value for X" + regIndex
+                    );
+                }
+            });
+
             row.add(new JLabel("" + i));
             row.add(ixrFields[i]);
             row.add(btn);
@@ -110,19 +154,41 @@ public class Interface extends JFrame {
     }
 
     private JPanel createHorizontalFieldWithButton(String label, JTextField field) {
+
         JPanel panel = new JPanel(new BorderLayout(8, 0));
-    
+
         JLabel lbl = new JLabel(label);
         JButton btn = new JButton(label);
-        btn.setPreferredSize(new Dimension(45, 25));  // small button
-    
+
+        btn.setPreferredSize(new Dimension(45, 25));
+
         field.setHorizontalAlignment(JTextField.RIGHT);
         field.setMaximumSize(new Dimension(Integer.MAX_VALUE, 25));
-    
+
+        // BUTTON ACTION
+        btn.addActionListener(e -> {
+            try {
+                int value = Integer.parseInt(field.getText(), 8);
+                var regs = cpu.getRegisters();
+
+                switch (label) {
+                    case "PC":  regs.PC.set(value); break;
+                    case "MAR": regs.MAR.set(value); break;
+                    case "MBR": regs.MBR.set(value); break;
+                }
+
+                refreshGUI();
+
+            } catch (NumberFormatException ex) {
+                JOptionPane.showMessageDialog(this,
+                        "Invalid octal value for " + label);
+            }
+        });
+
         panel.add(lbl, BorderLayout.WEST);
         panel.add(field, BorderLayout.CENTER);
         panel.add(btn, BorderLayout.EAST);
-    
+
         return panel;
     }
 
@@ -278,6 +344,11 @@ public class Interface extends JFrame {
 
         try {
             String file = programFileField.getText();
+            
+            if (file.isBlank()) {
+                JOptionPane.showMessageDialog(this, "Enter program file.");
+                return;
+            }
 
             int start = loader.load(file, memory);
 
@@ -302,16 +373,19 @@ public class Interface extends JFrame {
     private void runCPU() {
 
         new Thread(() -> {
-            while (true) {
 
-                cpu.cycle();
+            boolean running = true;
+
+            while (running) {
+
+                running = cpu.cycle();
 
                 SwingUtilities.invokeLater(this::refreshGUI);
 
                 try {
-                    Thread.sleep(400); // slow animation
+                    Thread.sleep(400);
                 } catch (InterruptedException ignored) {}
             }
         }).start();
-}
+    }
 }

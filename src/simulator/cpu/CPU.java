@@ -24,7 +24,7 @@ public class CPU {
         return registers;
     }
 
-    public void cycle() { //individually calls stages of the cycle
+    public boolean cycle() { //individually calls stages of the cycle
         System.out.println(
             "PC BEFORE FETCH = " +
             Integer.toOctalString(registers.PC.get())
@@ -42,6 +42,8 @@ public class CPU {
 
         if (!cont)
             System.out.println("HALT encountered.");
+
+        return cont;
     }
 
     private void fetch() {

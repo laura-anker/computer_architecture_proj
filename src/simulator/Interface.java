@@ -14,7 +14,7 @@ public class Interface extends JFrame {
     private JTextArea cacheArea, printerArea;
     private JTextField consoleInputField, programFileField;
 
-    // simulator backend
+    // simulator backend, interacts directly with these
     private simulator.memory.Memory memory;
     private simulator.cpu.CPU cpu;
     private simulator.io.ProgramLoader loader;

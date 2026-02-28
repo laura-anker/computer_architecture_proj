@@ -236,7 +236,14 @@ public class Assembler {
                     // r,ix,address[,i]
                     r = Integer.parseInt(splitData[index]);
                     ix = Integer.parseInt(splitData[index + 1]);
-                    address = Integer.parseInt(splitData[index + 2]);
+                    //address = Integer.parseInt(splitData[index + 2]);
+                    //had to add this in so we can handle loop labels
+                    String addrField = splitData[index + 2];
+                        if (dictionary.containsKey(addrField)) {
+                            address = dictionary.get(addrField);
+                        } else {
+                            address = Integer.parseInt(addrField);
+                        }
 
                     if (index + 3 < splitData.length) {
                         i = Integer.parseInt(splitData[index + 3]);
@@ -280,7 +287,7 @@ public class Assembler {
 //end pass 2
 
     public static void main(String[] args){
-        File sourceFile = new File("test_source_part1.txt");;
+        File sourceFile = new File("test_source_part1.txt");; //hard coding which source file to read
         Assembler a = new Assembler();
         a.run(sourceFile);
     }

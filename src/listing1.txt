@@ -1,0 +1,15 @@
+                LOC 10            ; Program starts at location 10
+000012  002024  LDR 0,0,20        ; Direct:   R0 <- M[20]
+000013  002524  LDR 1,1,20        ; Indexed:  R1 <- M[20 + X1] (X1=1 → location 21)
+000014  003071  LDR 2,0,25,1      ; Indirect: R2 <- M[ M[25] ] (points to 20)
+000015  004036  STR 0,0,30        ; Direct store (R0 → M[30])
+000016  004536  STR 1,1,30        ; Indexed store (R1 → M[31])
+000017  000000  HLT                ; Stop execution
+                LOC 20            ; Data values
+000024  000005  Data 5            ; location 20
+000025  000014  Data 12           ; location 21
+                LOC 25
+000031  000024  Data 20           ; points to address 20 (for indirect LDR)
+                LOC 30
+000036  000000  Data 0            ; result storage for STR
+000037  000000  Data 0            ; result storage for STR indexed

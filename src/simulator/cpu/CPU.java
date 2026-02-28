@@ -24,7 +24,7 @@ public class CPU {
         return registers;
     }
 
-    public boolean cycle() { //individually calls stages of the cycle
+    public boolean cycle() { //individually calls stages of the cycle and prints for testing purposes
         System.out.println(
             "PC BEFORE FETCH = " +
             Integer.toOctalString(registers.PC.get())

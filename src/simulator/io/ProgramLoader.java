@@ -46,7 +46,7 @@ public class ProgramLoader {
                     System.out.println("Loaded @" + parts[0] + " = " + parts[1]);
 
 
-                    int opcode = (value >> 10) & 0x3F;//we can maybe delete this? probs old
+                    //int opcode = (value >> 10) & 0x3F;//we can maybe delete this? probs old
 
                     // Set the start address to the first loaded memory location
                     // This assumes the first word in the file is the first instruction

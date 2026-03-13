@@ -37,5 +37,4 @@ public class Opcode {
     public static final int ORR  = 60;
     public static final int NOT  = 61;
 
-    //need to put in all other values (done 2/19)
 }

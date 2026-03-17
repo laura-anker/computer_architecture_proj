@@ -1,0 +1,100 @@
+LOC 6 ;BEGIN AT LOCATION 6
+
+Data 20      ;COUNT = 20 at location 6
+Data 0       ;INDEX = 0 at location 7
+Data 0       ;INPUT = 0 at location 8
+Data 0       ;USER = 0 at location 9
+Data 65535   ;MIN = large number at location 10
+Data 0       ;CLOSE = closest value at location 11
+
+;ARRAY STARTS HERE
+Data 0       ;ARR0
+Data 0       ;ARR1
+Data 0       ;ARR2
+Data 0       ;ARR3
+Data 0       ;ARR4
+Data 0       ;ARR5
+Data 0       ;ARR6
+Data 0       ;ARR7
+Data 0       ;ARR8
+Data 0       ;ARR9
+Data 0       ;ARR10
+Data 0       ;ARR11
+Data 0       ;ARR12
+Data 0       ;ARR13
+Data 0       ;ARR14
+Data 0       ;ARR15
+Data 0       ;ARR16
+Data 0       ;ARR17
+Data 0       ;ARR18
+Data 0       ;ARR19
+
+;-------------------------------------
+; READ 20 NUMBERS
+;-------------------------------------
+
+LDA 0,0,0       ;R0 = 0 (index)
+LDX 1,6         ;X1 = COUNT = 20
+
+READLOOP:
+IN 1,0          ;read number into R1
+STR 1,0,14      ;store at ARR0+R0
+
+AIR 0,1         ;R0 = R0 + 1
+SOB 0,1,READLOOP ;loop 20 times
+
+;-------------------------------------
+; PRINT NUMBERS
+;-------------------------------------
+
+LDA 0,0,0       ;reset index
+PRINTLOOP:
+LDR 1,0,14      ;load ARR[index]
+OUT 1,0         ;print number
+
+AIR 0,1         ;index++
+SOB 0,1,PRINTLOOP
+
+;-------------------------------------
+; GET USER NUMBER
+;-------------------------------------
+
+IN 2,0          ;user number -> R2
+STR 2,0,9       ;store USER
+
+;-------------------------------------
+; FIND CLOSEST
+;-------------------------------------
+
+LDA 0,0,0       ;index = 0
+FINDLOOP:
+LDR 1,0,14      ;R1 = ARR[index]
+
+LDR 2,0,9       ;R2 = USER
+SMR 1,2         ;R1 = R1 - USER
+
+NOT 1           ;absolute value if negative
+AIR 1,1
+
+LDR 3,0,10      ;R3 = MIN
+SMR 3,1         ;R3 = MIN - diff
+JGE 3,0,SKIP    ;if MIN <= diff skip
+
+STR 1,0,10      ;update MIN
+STR 1,0,11      ;update CLOSE
+
+SKIP:
+AIR 0,1         ;index++
+SOB 0,1,FINDLOOP
+
+;-------------------------------------
+; PRINT RESULTS
+;-------------------------------------
+
+LDR 2,0,9       ;USER
+OUT 2,0
+
+LDR 3,0,11      ;CLOSEST
+OUT 3,0
+
+HLT             ;END PROGRAM

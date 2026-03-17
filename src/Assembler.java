@@ -139,6 +139,20 @@ public class Assembler {
     }
 //end opcode map
 
+    // helper to safely get operand
+    String getOperand(String[] arr, int idx) {
+        if (idx >= arr.length) return null;
+        return arr[idx];
+    }
+
+    // helper to resolve label or number
+    java.util.function.Function<String, Integer> resolve = (operand) -> {
+        if (operand == null) return 0;
+        if (dictionary.containsKey(operand)) {
+            return dictionary.get(operand);
+        }
+        return Integer.parseInt(operand);
+    };
 
 //start pass 2
     public boolean pass2(File sourceFile){
@@ -147,8 +161,8 @@ public class Assembler {
 
         //Read a line of the file
         try (Scanner myreader = new Scanner(sourceFile);//this try automatically closes these when done even if error happens
-            PrintWriter listingFile = new PrintWriter("listing1.txt");
-            PrintWriter loadFile = new PrintWriter("load1.txt")) {
+            PrintWriter listingFile = new PrintWriter("test_listing_program1.txt");
+            PrintWriter loadFile = new PrintWriter("test_load_program1.txt")) {
             // read the file line by line
             while (myreader.hasNextLine()) {
                 String originalLine = myreader.nextLine();
@@ -224,41 +238,97 @@ public class Assembler {
 
                 // default fields
                 int r = 0, ix = 0, i = 0, address = 0;
-                // zero-operand instructions
-                if (opcodeStr.equals("HLT")) {
-                    // all fields stay 0
-                }else if (opcodeStr.equals("LDX") || opcodeStr.equals("STX")) {
-                    // LDX ix,address
-                    ix = Integer.parseInt(splitData[index]);
-                    address = Integer.parseInt(splitData[index + 1]);
-                }
-                else {
-                    // r,ix,address[,i]
-                    r = Integer.parseInt(splitData[index]);
-                    ix = Integer.parseInt(splitData[index + 1]);
-                    //address = Integer.parseInt(splitData[index + 2]);
-                    //had to add this in so we can handle loop labels
-                    String addrField = splitData[index + 2];
-                        if (dictionary.containsKey(addrField)) {
-                            address = dictionary.get(addrField);
-                        } else {
-                            address = Integer.parseInt(addrField);
-                        }
+                int ry = 0;     // for register-to-register
+                int al = 0;     // for shift/rotate
+                int lr = 0;
 
-                    if (index + 3 < splitData.length) {
-                        i = Integer.parseInt(splitData[index + 3]);
+                // -------- INSTRUCTION TYPES --------
+
+                // 1. ZERO OPERAND
+                if (opcodeStr.equals("HLT")) {
+                    // nothing to do
+                }
+
+                // 2. I/O: IN, OUT, CHK → r, device
+                else if (opcodeStr.equals("IN") || opcodeStr.equals("OUT") || opcodeStr.equals("CHK")) {
+                    r = resolve.apply(getOperand(splitData, index));
+                    address = resolve.apply(getOperand(splitData, index + 1));
+                }
+
+                // 3. IMMEDIATE: AIR, SIR → r, immediate
+                else if (opcodeStr.equals("AIR") || opcodeStr.equals("SIR")) {
+                    r = resolve.apply(getOperand(splitData, index));
+                    address = resolve.apply(getOperand(splitData, index + 1));
+                }
+
+                // 4. REGISTER-TO-REGISTER
+                else if (opcodeStr.equals("MLT") || opcodeStr.equals("DVD") ||
+                        opcodeStr.equals("TRR") || opcodeStr.equals("AND") ||
+                        opcodeStr.equals("ORR")) {
+
+                    r = resolve.apply(getOperand(splitData, index));
+                    ry = resolve.apply(getOperand(splitData, index + 1));
+                }
+
+                // 5. SHIFT / ROTATE: SRC, RRC → r, al, lr, count
+                else if (opcodeStr.equals("SRC") || opcodeStr.equals("RRC")) {
+
+                    r  = resolve.apply(getOperand(splitData, index));
+                    al = resolve.apply(getOperand(splitData, index + 1));
+                    lr = resolve.apply(getOperand(splitData, index + 2));
+                    address = resolve.apply(getOperand(splitData, index + 3)); // count
+                }
+
+                // 6. LDX/STX → ix, address
+                else if (opcodeStr.equals("LDX") || opcodeStr.equals("STX")) {
+
+                    ix = resolve.apply(getOperand(splitData, index));
+                    address = resolve.apply(getOperand(splitData, index + 1));
+                }
+
+                // 7. DEFAULT: MEMORY REFERENCE → r, ix, address[, i]
+                else {
+
+                    r  = resolve.apply(getOperand(splitData, index));
+                    ix = resolve.apply(getOperand(splitData, index + 1));
+                    address = resolve.apply(getOperand(splitData, index + 2));
+
+                    String iField = getOperand(splitData, index + 3);
+                    if (iField != null) {
+                        i = Integer.parseInt(iField);
                         if (i != 0 && i != 1) {
                             System.out.println("invalid indirect bit");
                             return false;
                         }
                     }
-
                 }
                 
 
                 //build our 16-bit instruction
-                int instruction = (opcode << 10) | (r << 8) | (ix << 6) | (i << 5) | (address & 0x1F);
-                //int instruction = (opcode << 11) | (r << 9) | (ix << 7) | (i << 6) | (address & 0x7F);
+                //int instruction = (opcode << 10) | (r << 8) | (ix << 6) | (i << 5) | (address & 0x1F);
+                int instruction = 0;
+
+                if (opcodeStr.equals("MLT") || opcodeStr.equals("DVD") ||
+                    opcodeStr.equals("TRR") || opcodeStr.equals("AND") ||
+                    opcodeStr.equals("ORR")) {
+
+                    instruction = (opcode << 10) | (r << 8) | (ry << 6);
+
+                }
+                else if (opcodeStr.equals("SRC") || opcodeStr.equals("RRC")) {
+
+                    instruction = (opcode << 10) | (r << 8) | (al << 7) | (lr << 6) | (address & 0xF);
+
+                }
+                else if (opcodeStr.equals("IN") || opcodeStr.equals("OUT") || opcodeStr.equals("CHK")) {
+
+                    instruction = (opcode << 10) | (r << 8) | (address & 0x1F);
+
+                }
+                else {
+
+                    instruction = (opcode << 10) | (r << 8) | (ix << 6) | (i << 5) | (address & 0x1F);
+                }
 
                 // write listing file in octal
                 listingFile.printf("%06o  %06o  %s%n", codeLocation, instruction, originalLine);
@@ -287,7 +357,7 @@ public class Assembler {
 //end pass 2
 
     public static void main(String[] args){
-        File sourceFile = new File("test_source_part1.txt");; //hard coding which source file to read
+        File sourceFile = new File("test_source_program1.txt");; //hard coding which source file to read
         Assembler a = new Assembler();
         a.run(sourceFile);
     }

@@ -50,7 +50,14 @@ public class ProgramLoader {
 
                     // Set the start address to the first loaded memory location
                     // This assumes the first word in the file is the first instruction
-                    if (startAddress == -1) {
+                    /*if (startAddress == -1) {
+                        startAddress = address;
+                    }*/
+                    // extract opcode
+                    int opcode = (value >> 10) & 0x3F;
+
+                    // skip pure data (very simple heuristic)
+                    if (startAddress == -1 && opcode != 0) {
                         startAddress = address;
                     }
 

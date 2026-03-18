@@ -83,7 +83,7 @@ public class InstructionDecoder {
                 inst.r     = (w >> 8) & 0x3;
                 inst.al    = (w >> 7) & 0x1;
                 inst.lr    = (w >> 6) & 0x1;
-                inst.count = (w >> 2) & 0xF;
+                inst.count = w  & 0x3F;
 
                 break;
 
@@ -97,7 +97,7 @@ public class InstructionDecoder {
             case Opcode.CHK:
 
                 inst.r        = (w >> 8) & 0x3;
-                inst.deviceId =  w       & 0x1F;
+                inst.deviceId =  w       & 0xFF;
 
                 break;
 

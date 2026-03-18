@@ -317,16 +317,24 @@ public class Assembler {
                 }
                 else if (opcodeStr.equals("SRC") || opcodeStr.equals("RRC")) {
 
-                    instruction = (opcode << 10) | (r << 8) | (al << 7) | (lr << 6) | (address & 0xF);
+                    instruction = (opcode << 10) | (r << 8) | (al << 7) | (lr << 6) | (address & 0x3F);
 
                 }
                 else if (opcodeStr.equals("IN") || opcodeStr.equals("OUT") || opcodeStr.equals("CHK")) {
 
-                    instruction = (opcode << 10) | (r << 8) | (address & 0x1F);
+                    instruction = (opcode << 10) | (r << 8) | (address & 0xFF);
 
                 }
+                else if (opcodeStr.equals("TRAP")) {
+                    instruction = (opcode << 10) | (address & 0xF);
+                }
+                else if (opcodeStr.equals("AIR") || opcodeStr.equals("SIR")) {
+                    instruction = (opcode << 10) | (r   << 8) | (address & 0x1F);
+                }
+                else if (opcodeStr.equals("LDX") || opcodeStr.equals("STX")) {
+                    instruction = (opcode << 10) | (ix  << 6) | (i   << 5) | (address & 0x1F);
+                }
                 else {
-
                     instruction = (opcode << 10) | (r << 8) | (ix << 6) | (i << 5) | (address & 0x1F);
                 }
 

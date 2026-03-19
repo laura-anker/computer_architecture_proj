@@ -25,6 +25,9 @@ public class Assembler {
     //build label/address map
     //return true if successful, false if error
 
+    int detectedStartAddress = -1;
+
+
     //start pass 1
     public boolean pass1(File sourceFile){
         //set code location to 0
@@ -236,6 +239,12 @@ public class Assembler {
                     return false; // stop if invalid opcode
                 }//end if
 
+                // findfirst real instruction address
+                if (detectedStartAddress == -1) {
+                    detectedStartAddress = codeLocation;
+                }
+
+
                 // default fields
                 int r = 0, ix = 0, i = 0, address = 0;
                 int ry = 0;     // for register-to-register
@@ -344,7 +353,8 @@ public class Assembler {
                 loadFile.printf("%06o  %06o%n", codeLocation, instruction);
                 codeLocation++; // increment location
             }//end while
-
+        // START directive at end of load file
+        loadFile.printf("START %06o%n", detectedStartAddress);
         } //end try
 
         catch (FileNotFoundException e) { //error handling in reading file
@@ -370,5 +380,6 @@ public class Assembler {
         a.run(sourceFile);
     }
 //end main
+
 
 }//end public class assembler

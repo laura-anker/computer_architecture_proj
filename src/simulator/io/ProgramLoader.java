@@ -30,6 +30,11 @@ public class ProgramLoader {
                 if (line.isEmpty())
                     continue;
 
+                if (line.startsWith("START")) {
+                    String[] parts = line.split("\\s+");
+                    return Integer.parseInt(parts[1], 8);   // return start address in octal
+                }
+
                 //split line into address and value
                 String[] parts = line.split("\\s+");
                 if (parts.length < 2)
@@ -46,17 +51,13 @@ public class ProgramLoader {
                     System.out.println("Loaded @" + parts[0] + " = " + parts[1]);
 
 
-                    //int opcode = (value >> 10) & 0x3F;//we can maybe delete this? probs old
+                    int opcode = (value >> 10) & 0x3F;//we can maybe delete this? probs old
 
                     // Set the start address to the first loaded memory location
                     // This assumes the first word in the file is the first instruction
-                    /*if (startAddress == -1) {
-                        startAddress = address;
-                    }*/
                     // extract opcode
-                    int opcode = (value >> 10) & 0x3F;
 
-                    // skip pure data (very simple heuristic)
+                    // skip data 
                     if (startAddress == -1 && opcode != 0) {
                         startAddress = address;
                     }

@@ -17,12 +17,13 @@ public class Simulator {
     public void start() {
         // Load the assembled load file
         ProgramLoader loader = new ProgramLoader();
-        int start = loader.load("test_load_program1_copy.txt", memory);
+        int start = loader.load("test_load_program1.txt", memory);
 
         System.out.println("Start address (octal)= " + Integer.toOctalString(start));
 
         //set pc
-        cpu.getRegisters().PC.set(start);
+        cpu.getRegisters().PC.set(start); 
+        
 
         //Setup index registers
         cpu.getRegisters().IX[1].set(1);  // X1 = 1 for indexed instructions

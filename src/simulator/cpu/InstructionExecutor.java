@@ -183,11 +183,9 @@ public class InstructionExecutor {
 
     ///oad index register from mem
     private void executeLDX(Instruction inst) {
-        //int value = memory.read(inst.address); // LDX does not use indirect or IX
-        //regs.getIX(inst.r).set(value); // inst.r is IX reg number
         int ea = eaCalc.computeEA(inst, regs, memory);
         int value = memory.read(ea);
-        regs.getIX(inst.r).set(value);
+        regs.getIX(inst.ix).set(value);
     }
 
     //store index register to mem
@@ -195,7 +193,7 @@ public class InstructionExecutor {
         //int value = regs.getIX(inst.r).get();
         //memory.write(inst.address, (short)value);
         int ea = eaCalc.computeEA(inst, regs, memory);
-        int value = regs.getIX(inst.r).get();
+        int value = regs.getIX(inst.ix).get(); //change from .r to .ix
         memory.write(ea, (short)value);
     }
 
@@ -244,8 +242,6 @@ public class InstructionExecutor {
             int ea = eaCalc.computeEA(inst, regs, memory);
             regs.getPC().set(ea);
 
-        }else{
-            regs.getPC().set(regs.getPC().get()+1);
         }
     }
 
@@ -257,8 +253,6 @@ public class InstructionExecutor {
             int ea = eaCalc.computeEA(inst, regs, memory);
             regs.getPC().set(ea);
 
-        }else{
-            regs.getPC().set(regs.getPC().get()+1);
         }
     }
 
@@ -283,8 +277,6 @@ public class InstructionExecutor {
             int ea = eaCalc.computeEA(inst, regs, memory);
 
             regs.getPC().set(ea);
-        }else{
-            regs.getPC().set(regs.getPC().get()+1);
         }
     }
 
@@ -296,8 +288,6 @@ public class InstructionExecutor {
             int ea = eaCalc.computeEA(inst, regs, memory);
 
             regs.getPC().set(ea);
-        }else{
-            regs.getPC().set(regs.getPC().get()+1);
         }
     }
 
@@ -307,7 +297,7 @@ public class InstructionExecutor {
         int ea = eaCalc.computeEA(inst, regs, memory);
 
         // save return address
-        regs.getGPR(3).set(regs.getPC().get()+1);
+        regs.getGPR(3).set(regs.getPC().get());
 
         // jump to subroutine
         regs.getPC().set(ea);
@@ -333,8 +323,6 @@ public class InstructionExecutor {
             int ea = eaCalc.computeEA(inst, regs, memory);
 
             regs.getPC().set(ea);
-        }else{
-            regs.getPC().set(regs.getPC().get()+1);
         }
     }
 
@@ -372,15 +360,20 @@ public class InstructionExecutor {
         int r = regs.getGPR(inst.r).get();
         int x = regs.getGPR(inst.ry).get();
         if (r == x){
-            regs.setCCBit(4, 1);
+            regs.setCCBit(3, 1);
+        }else{
+            regs.setCCBit(3, 0);
         }
-        regs.setCCBit(4, 0);
     }
 
     // MULTIPLY AND DIVIDE
 
     //multiply register by register
     private void executeMLT(Instruction inst) {
+        if (inst.r != 0 && inst.r != 2) {
+            System.out.println("MLT requires R0 or R2 as first operand");
+            return;
+        }
 
         int rx = regs.getGPR(inst.r).get();
         int ry = regs.getGPR(inst.ry).get();
@@ -394,18 +387,24 @@ public class InstructionExecutor {
         regs.getGPR(inst.r + 1).set(low);
 
         //set overflow flag is overflow?? look into this instruction
+        if (result > 0xFFFFFFFFL) {
+            regs.setCCBit(0, 1); // overflow
+        }
     }
 
     //divide register by register
     private void executeDVD(Instruction inst) {
+        if (inst.r != 0 && inst.r != 2) {
+            System.out.println("DVD requires R0 or R2 as first operand");
+            return;
+        }
 
         int rx = regs.getGPR(inst.r).get();
         int ry = regs.getGPR(inst.ry).get();
 
         if (ry == 0) {
-            //need to set divide zero flag instead
-            System.out.println("Divide by zero");
-
+            //set divide zero flag
+            regs.setCCBit(2, 1);
             return;
         }
 
@@ -413,7 +412,7 @@ public class InstructionExecutor {
         int remainder = rx % ry;
 
         regs.getGPR(inst.r).set(quotient);
-        regs.getGPR(inst.r + 1).set(remainder);
+        regs.getGPR(inst.r + 1).set(remainder);  
     }
 
     // SHIFT AND ROTATE

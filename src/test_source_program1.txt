@@ -1,100 +1,116 @@
-LOC 6 ;BEGIN AT LOCATION 6
+LOC 6          ; BEGIN AT LOCATION 6
 
-Data 20      ;COUNT = 20 at location 6
-Data 0       ;INDEX = 0 at location 7
-Data 0       ;INPUT = 0 at location 8
-Data 0       ;USER = 0 at location 9
-Data 65535   ;MIN = large number at location 10
-Data 0       ;CLOSE = closest value at location 11
+;-------------------------------------
+; DATA SECTION
+;-------------------------------------
 
-;ARRAY STARTS HERE
-Data 0       ;ARR0
-Data 0       ;ARR1
-Data 0       ;ARR2
-Data 0       ;ARR3
-Data 0       ;ARR4
-Data 0       ;ARR5
-Data 0       ;ARR6
-Data 0       ;ARR7
-Data 0       ;ARR8
-Data 0       ;ARR9
-Data 0       ;ARR10
-Data 0       ;ARR11
-Data 0       ;ARR12
-Data 0       ;ARR13
-Data 0       ;ARR14
-Data 0       ;ARR15
-Data 0       ;ARR16
-Data 0       ;ARR17
-Data 0       ;ARR18
-Data 0       ;ARR19
+COUNT:  DATA 20        ; location 6
+INDEX:  DATA 0         ; location 7
+INPUT:  DATA 0         ; location 8
+USER:   DATA 0         ; location 9
+MIN:    DATA 65535     ; location 10
+CLOSE:  DATA 0         ; location 11
+
+ARR0:   DATA 0         ; location 12
+ARR1:   DATA 0
+ARR2:   DATA 0
+ARR3:   DATA 0
+ARR4:   DATA 0
+ARR5:   DATA 0
+ARR6:   DATA 0
+ARR7:   DATA 0
+ARR8:   DATA 0
+ARR9:   DATA 0
+ARR10:  DATA 0
+ARR11:  DATA 0
+ARR12:  DATA 0
+ARR13:  DATA 0
+ARR14:  DATA 0
+ARR15:  DATA 0
+ARR16:  DATA 0
+ARR17:  DATA 0
+ARR18:  DATA 0
+ARR19:  DATA 0         ; location 31
 
 ;-------------------------------------
 ; READ 20 NUMBERS
 ;-------------------------------------
 
-LDA 0,0,0       ;R0 = 0 (index)
-LDX 1,6         ;X1 = COUNT = 20
+        LDX 1,12       ; X1 = address of ARR0
+        LDX 2,6        ; X2 = COUNT = 20
 
 READLOOP:
-IN 1,0          ;read number into R1
-STR 1,0,14      ;store at ARR0+R0
+        IN 1,0         ; read number into R1
+        STX 1,1,0      ; store R1 at memory[X1]
 
-AIR 0,1         ;R0 = R0 + 1
-SOB 0,1,READLOOP ;loop 20 times
+        LDA 3,0,1      ; R3 = 1
+        AMR 1,3        ; X1 = X1 + 1
+
+        SOB 2,0,READLOOP   ; loop 20 times
 
 ;-------------------------------------
 ; PRINT NUMBERS
 ;-------------------------------------
 
-LDA 0,0,0       ;reset index
-PRINTLOOP:
-LDR 1,0,14      ;load ARR[index]
-OUT 1,0         ;print number
+        LDX 1,12       ; reset X1 to ARR0
+        LDX 2,6        ; reset loop counter
 
-AIR 0,1         ;index++
-SOB 0,1,PRINTLOOP
+PRINTLOOP:
+        LDX 3,1,0      ; R3 = memory[X1]
+        OUT 3,0        ; print it
+
+        LDA 4,0,1      ; R4 = 1
+        AMR 1,4        ; X1 = X1 + 1
+
+        SOB 2,0,PRINTLOOP
 
 ;-------------------------------------
 ; GET USER NUMBER
 ;-------------------------------------
 
-IN 2,0          ;user number -> R2
-STR 2,0,9       ;store USER
+        IN 2,0         ; user number -> R2
+        STR 2,0,9      ; store USER
 
 ;-------------------------------------
 ; FIND CLOSEST
 ;-------------------------------------
 
-LDA 0,0,0       ;index = 0
+        LDX 1,12       ; X1 = ARR0
+        LDX 2,6        ; X2 = COUNT = 20
+
 FINDLOOP:
-LDR 1,0,14      ;R1 = ARR[index]
+        LDX 3,1,0      ; R3 = ARR[index]
 
-LDR 2,0,9       ;R2 = USER
-SMR 1,2         ;R1 = R1 - USER
+        LDR 4,0,9      ; R4 = USER
+        SMR 3,4        ; R3 = ARR[i] - USER
 
-NOT 1           ;absolute value if negative
-AIR 1,1
+        ; absolute value
+        JGE 3,0,POS
+        NOT 3
+        AIR 3,1
+POS:
 
-LDR 3,0,10      ;R3 = MIN
-SMR 3,1         ;R3 = MIN - diff
-JGE 3,0,SKIP    ;if MIN <= diff skip
+        LDR 5,0,10     ; R5 = MIN
+        SMR 5,3        ; R5 = MIN - diff
+        JGE 5,0,SKIP   ; if MIN <= diff, skip update
 
-STR 1,0,10      ;update MIN
-STR 1,0,11      ;update CLOSE
+        STR 3,0,10     ; MIN = diff
+        STR 3,0,11     ; CLOSE = diff
 
 SKIP:
-AIR 0,1         ;index++
-SOB 0,1,FINDLOOP
+        LDA 6,0,1      ; R6 = 1
+        AMR 1,6        ; X1 = X1 + 1
+
+        SOB 2,0,FINDLOOP
 
 ;-------------------------------------
 ; PRINT RESULTS
 ;-------------------------------------
 
-LDR 2,0,9       ;USER
-OUT 2,0
+        LDR 2,0,9      ; USER
+        OUT 2,0
 
-LDR 3,0,11      ;CLOSEST
-OUT 3,0
+        LDR 3,0,11     ; CLOSEST
+        OUT 3,0
 
-HLT             ;END PROGRAM
+        HLT

@@ -8,8 +8,9 @@ import java.util.Map;
 public class Assembler {
 
     Map<String, Integer> dictionary = new HashMap<>();
-
+    //int detectedStartAddress = -1;
     public void run(File sourceFile){
+        //detectedStartAddress = -1; //reset
         if (pass1(sourceFile) == false){
             System.out.println("error! exiting pass 1");
             return;//error!
@@ -25,18 +26,18 @@ public class Assembler {
     //build label/address map
     //return true if successful, false if error
 
-    int detectedStartAddress = -1;
-
 
     //start pass 1
     public boolean pass1(File sourceFile){
         //set code location to 0
         int codeLocation = 0;
         //Read a line of the file
-
+        System.out.println("Reading from: " + sourceFile.getAbsolutePath());
+        
         try (Scanner myReader = new Scanner(sourceFile)) { 
             while (myReader.hasNextLine()) {
                 String data = myReader.nextLine();
+                //System.out.println("LINE: [" + data + "]");
                 if (data.isEmpty() || data.startsWith(";")){//if line is empty or comment, move to next line
                     continue;
                 }
@@ -164,8 +165,8 @@ public class Assembler {
 
         //Read a line of the file
         try (Scanner myreader = new Scanner(sourceFile);//this try automatically closes these when done even if error happens
-            PrintWriter listingFile = new PrintWriter("test_listing_program1.txt");
-            PrintWriter loadFile = new PrintWriter("test_load_program1.txt")) {
+            PrintWriter listingFile = new PrintWriter("test_listing_p1.txt");
+            PrintWriter loadFile = new PrintWriter("test_load_p1.txt")) {
             // read the file line by line
             while (myreader.hasNextLine()) {
                 String originalLine = myreader.nextLine();
@@ -222,10 +223,10 @@ public class Assembler {
                         }//end else
                     }//end if
 
-                    // write to listing file in octal
-                    listingFile.printf("%06o  %06o  %s%n", codeLocation, dataValue, originalLine);
-                    // write to load file in octal
-                    loadFile.printf("%06o  %06o%n", codeLocation, dataValue);
+                    // write to listing file in octal (mask to 16 bits to handle negative/data values)
+                    listingFile.printf("%06o  %06o  %s%n", codeLocation, (dataValue & 0xFFFF), originalLine);
+                    // write to load file in octal (mask to 16 bits)
+                    loadFile.printf("%06o  %06o%n", codeLocation, (dataValue & 0xFFFF));
                     codeLocation++; // increment location
                     continue;
                 }
@@ -240,9 +241,9 @@ public class Assembler {
                 }//end if
 
                 // findfirst real instruction address
-                if (detectedStartAddress == -1) {
-                    detectedStartAddress = codeLocation;
-                }
+                //if (detectedStartAddress == -1) {
+                //    detectedStartAddress = codeLocation;
+                //}
 
 
                 // default fields
@@ -341,10 +342,10 @@ public class Assembler {
                     instruction = (opcode << 10) | (r   << 8) | (address & 0x1F);
                 }
                 else if (opcodeStr.equals("LDX") || opcodeStr.equals("STX")) {
-                    instruction = (opcode << 10) | (ix  << 6) | (i   << 5) | (address & 0x1F);
+                    instruction = (opcode << 10) | (ix  << 6) | (i   << 5) | (address & 0x3FF);
                 }
                 else {
-                    instruction = (opcode << 10) | (r << 8) | (ix << 6) | (i << 5) | (address & 0x1F);
+                    instruction = (opcode << 10) | (r << 8) | (ix << 6) | (i << 5) | (address & 0x3FF);
                 }
 
                 // write listing file in octal
@@ -352,10 +353,12 @@ public class Assembler {
                 // write load file in octal
                 loadFile.printf("%06o  %06o%n", codeLocation, instruction);
                 codeLocation++; // increment location
+                
             }//end while
-        // START directive at end of load file
-        loadFile.printf("START %06o%n", detectedStartAddress);
+            // START directive at end of load file
+            //loadFile.printf("START %06o%n", detectedStartAddress);
         } //end try
+    
 
         catch (FileNotFoundException e) { //error handling in reading file
             System.out.println("an error occurred reading the file");
@@ -375,7 +378,7 @@ public class Assembler {
 //end pass 2
 
     public static void main(String[] args){
-        File sourceFile = new File("test_source_program1.txt");; //hard coding which source file to read
+        File sourceFile = new File("test_source_p1.txt"); //hard coding which source file to read
         Assembler a = new Assembler();
         a.run(sourceFile);
     }

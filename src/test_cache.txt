@@ -1,0 +1,30 @@
+; ===== Preload memory =====
+LOC 20
+DATA 1234
+DATA 5678
+DATA 9012
+DATA 3456
+DATA 7890
+
+; ===== Program starts at 100 =====
+LOC 100
+
+; First access to 20 → MISS
+LDR 0,0,20
+
+; Second access to 20 → HIT
+LDR 1,0,20
+
+; Access 21 → MISS
+LDR 2,0,21
+
+; Access 22 → MISS
+LDR 3,0,22
+
+; Access 23 → MISS
+LDR 0,0,23
+
+; Access 24 → MISS
+LDR 1,0,24
+
+HLT

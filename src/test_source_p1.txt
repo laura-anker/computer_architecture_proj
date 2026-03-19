@@ -1,0 +1,345 @@
+        LOC     6
+
+; ============================================================
+; Program 1 — Read 20 signed integers, print them, read a user
+; value, find the array element closest to the user value, print
+; the user value and the closest value. Handles negatives and
+; assembles integers from digit characters (range -32768..32767).
+; ============================================================
+
+COUNT:      DATA    20
+ARRPTR:     DATA    ARR0
+USERVAL:    DATA    0
+BESTVAL:    DATA    0
+BESTDIFF:   DATA    32767
+TEMP:       DATA    0
+SIGN:       DATA    0
+CHAR:       DATA    0
+VALUE:      DATA    0
+DIGIT:      DATA    0
+TEN:        DATA    10
+NEGONE:     DATA    -1
+
+ASCII_ZERO: DATA    48
+ASCII_NINE: DATA    57
+ASCII_MINUS: DATA   45
+ASCII_NL:   DATA    10
+
+; 20-element array
+ARR0:       DATA    0
+ARR1:       DATA    0
+ARR2:       DATA    0
+ARR3:       DATA    0
+ARR4:       DATA    0
+ARR5:       DATA    0
+ARR6:       DATA    0
+ARR7:       DATA    0
+ARR8:       DATA    0
+ARR9:       DATA    0
+ARR10:      DATA    0
+ARR11:      DATA    0
+ARR12:      DATA    0
+ARR13:      DATA    0
+ARR14:      DATA    0
+ARR15:      DATA    0
+ARR16:      DATA    0
+ARR17:      DATA    0
+ARR18:      DATA    0
+ARR19:      DATA    0
+
+; buffers for printing digits
+DIGBUF0:    DATA 0
+DIGBUF1:    DATA 0
+DIGBUF2:    DATA 0
+DIGBUF3:    DATA 0
+DIGBUF4:    DATA 0
+DIGBUF5:    DATA 0
+
+; ============================================================
+; MAIN
+; ============================================================
+
+        LOC     40
+
+START:
+        ; R0 = COUNT, R1 = pointer to next array slot
+        LDR     0,0,COUNT
+        LDX     1,ARRPTR
+
+; Read 20 integers into array (assembled from digit characters)
+READ20_LOOP:
+        JSR     3,READINT    ; returns integer in R0
+        STR     0,1,0        ; store into *ARRPTR
+
+        LDA     2,1,0
+        AIR     2,1
+        STX     2,ARRPTR
+        LDX     1,ARRPTR
+
+        SOB     0,0,READ20_LOOP
+
+; Print the 20 integers (one per line)
+        LDR     0,0,COUNT
+        LDA     2,0,ARR0
+        STX     2,ARRPTR
+        LDX     1,ARRPTR
+
+PRINT20_LOOP:
+        LDR     0,1,0
+        JSR     3,PRINTINT
+
+        LDA     2,1,0
+        AIR     2,1
+        STX     2,ARRPTR
+        LDX     1,ARRPTR
+
+        SOB     0,0,PRINT20_LOOP
+
+; Read user search value
+        JSR     3,READINT
+        STR     0,0,USERVAL
+
+; Find closest — iterate array, compute abs(user - element)
+        LDR     0,0,COUNT
+        STR     0,0,TEMP       ; TEMP = remaining count
+
+        LDA     2,0,ARR0
+        STX     2,ARRPTR
+        LDX     1,ARRPTR
+
+FIND_LOOP:
+        LDR     1,1,0         ; R1 = current array value
+        LDR     0,0,USERVAL
+        SMR     0,1,0         ; R0 = user - current
+
+        JSR     3,ABS         ; R0 = abs difference
+        STR     0,0,VALUE
+
+        LDR     2,0,BESTDIFF
+        SMR     2,0,VALUE
+        JGE     2,0,NO_UPDATE ; if BESTDIFF <= VALUE skip
+
+        LDR     0,0,VALUE
+        STR     0,0,BESTDIFF
+
+        LDR     0,1,0
+        STR     0,0,BESTVAL
+
+NO_UPDATE:
+        LDA     2,1,0
+        AIR     2,1
+        STX     2,ARRPTR
+        LDX     1,ARRPTR
+
+        LDR     0,0,TEMP
+        SIR     0,1
+        STR     0,0,TEMP
+
+        JGE     0,0,FIND_LOOP
+
+; Print user value and closest value
+        LDR     0,0,USERVAL
+        JSR     3,PRINTINT
+
+        LDR     0,0,BESTVAL
+        JSR     3,PRINTINT
+
+        HLT
+
+; ============================================================
+; SUBROUTINES
+; ============================================================
+
+READCHAR:
+        IN      1,0
+        RFS     0
+
+ABS:
+        ; absolute value of R0
+        JGE     0,0,ABS_RET
+        LDR     1,0,NEGONE
+        MLT     0,1
+        LDR     0,0,VALUE
+ABS_RET:
+        RFS     0
+
+MULT10:
+        LDR     1,0,TEN
+        MLT     0,1
+        LDR     0,0,VALUE
+        RFS     0
+
+PRINTNEWLINE:
+        LDR     1,0,ASCII_NL
+        OUT     1,0
+        RFS     0
+
+; READINT — read signed integer into R0
+; Assembles digits until newline; supports optional leading '-'
+READINT:
+        STR     3,0,TEMP        ; save return address in TEMP
+
+        LDA     0,0,0
+        STR     0,0,VALUE
+
+        LDA     0,0,0
+        AIR     0,1
+        STR     0,0,SIGN
+
+READINT_LOOP:
+        JSR     3,READCHAR
+        STR     1,0,CHAR
+
+        LDR     2,0,CHAR
+        SMR     2,0,ASCII_NL
+        JZ      2,0,READINT_DONE
+
+        LDR     2,0,CHAR
+        SMR     2,0,ASCII_MINUS
+        JZ      2,0,SET_NEG
+
+        LDR     2,0,CHAR
+        SMR     2,0,ASCII_ZERO
+        JGE     2,0,CHECK_DIGIT
+        JMA     READINT_LOOP
+
+CHECK_DIGIT:
+        LDR     2,0,CHAR
+        SMR     2,0,ASCII_NINE
+        JGE     2,0,READINT_LOOP
+
+        LDR     0,0,CHAR
+        SMR     0,0,ASCII_ZERO
+        STR     0,0,DIGIT
+
+        LDR     0,0,VALUE
+        JSR     3,MULT10
+        STR     0,0,VALUE
+
+        LDR     0,0,VALUE
+        AMR     0,0,DIGIT
+        STR     0,0,VALUE
+
+        JMA     READINT_LOOP
+
+SET_NEG:
+        LDR     0,0,NEGONE
+        STR     0,0,SIGN
+        JMA     READINT_LOOP
+
+READINT_DONE:
+        LDR     0,0,VALUE
+        LDR     1,0,SIGN
+        MLT     0,1
+        LDR     0,0,VALUE
+
+        LDR     3,0,TEMP
+        RFS     0
+
+; PRINTINT — print integer in R0
+PRINTINT:
+        STR     3,0,TEMP        ; save return address
+
+        ; handle negative
+        JGE     0,0,PI_POS
+
+        LDR     1,0,ASCII_MINUS
+        OUT     1,0
+
+        LDR     1,0,NEGONE
+        MLT     0,1
+        LDR     0,0,VALUE
+
+PI_POS:
+        ; if R0 == 0, print '0'
+        JNE     0,0,PI_CONVERT
+        LDR     1,0,ASCII_ZERO
+        OUT     1,0
+        JMA     PI_DONE
+
+PI_CONVERT:
+        LDA     1,0,0
+        STR     1,0,TEMP        ; TEMP = digit count
+
+PI_DIV_LOOP:
+        LDR     1,0,TEN
+        DVD     0,1             ; quotient in R0, remainder in R1
+        STR     1,0,DIGIT       ; remainder
+
+        ; convert digit to ASCII
+        LDR     1,0,DIGIT
+        AMR     1,0,ASCII_ZERO
+
+        ; store into DIGBUF[TEMP]
+        LDR     2,0,TEMP
+        JZ      2,0,STORE0
+        SIR     2,1
+        JZ      2,0,STORE1
+        SIR     2,1
+        JZ      2,0,STORE2
+        SIR     2,1
+        JZ      2,0,STORE3
+        SIR     2,1
+        JZ      2,0,STORE4
+        JMA     STORE5
+
+STORE0: STR 1,0,DIGBUF0
+        JMA AFTER_STORE
+STORE1: STR 1,0,DIGBUF1
+        JMA AFTER_STORE
+STORE2: STR 1,0,DIGBUF2
+        JMA AFTER_STORE
+STORE3: STR 1,0,DIGBUF3
+        JMA AFTER_STORE
+STORE4: STR 1,0,DIGBUF4
+        JMA AFTER_STORE
+STORE5: STR 1,0,DIGBUF5
+
+AFTER_STORE:
+        ; TEMP++
+        LDR     1,0,TEMP
+        AIR     1,1
+        STR     1,0,TEMP
+
+        ; continue if quotient > 0
+        JNE     0,0,PI_DIV_LOOP
+
+PI_PRINT_LOOP:
+        LDR     1,0,TEMP
+        SIR     1,1
+        STR     1,0,TEMP
+
+        LDR     2,0,TEMP
+        JZ      2,0,PRINT0
+        SIR     2,1
+        JZ      2,0,PRINT1
+        SIR     2,1
+        JZ      2,0,PRINT2
+        SIR     2,1
+        JZ      2,0,PRINT3
+        SIR     2,1
+        JZ      2,0,PRINT4
+        JMA     PRINT5
+
+PRINT0: LDR 1,0,DIGBUF0
+        JMA DO_PRINT
+PRINT1: LDR 1,0,DIGBUF1
+        JMA DO_PRINT
+PRINT2: LDR 1,0,DIGBUF2
+        JMA DO_PRINT
+PRINT3: LDR 1,0,DIGBUF3
+        JMA DO_PRINT
+PRINT4: LDR 1,0,DIGBUF4
+        JMA DO_PRINT
+PRINT5: LDR 1,0,DIGBUF5
+
+DO_PRINT:
+        OUT     1,0
+        JGE     1,0,PI_PRINT_LOOP
+
+PI_DONE:
+        LDR     1,0,ASCII_NL
+        OUT     1,0
+
+        LDR     3,0,TEMP
+        RFS     0

@@ -74,4 +74,28 @@ public class Cache extends Memory {
         line.data = value;
         line.age = fifoCounter++;
     }
+
+    public String dumpCache() {
+    StringBuilder sb = new StringBuilder();
+
+    for (int i = 0; i < lines.length; i++) {
+        CacheLine line = lines[i];
+
+        sb.append("Line ").append(i).append(": ");
+
+        if (!line.valid) {
+            sb.append("EMPTY\n");
+        } else {
+            sb.append("Tag=")
+              .append(Integer.toOctalString(line.tag))
+              .append(" Data=")
+              .append(Integer.toOctalString(line.data))
+              .append(" Age=")
+              .append(line.age)
+              .append("\n");
+        }
+    }
+
+    return sb.toString();
+    }
 }

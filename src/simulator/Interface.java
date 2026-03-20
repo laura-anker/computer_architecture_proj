@@ -21,12 +21,14 @@ public class Interface extends JFrame implements IODevice{
     private simulator.memory.Memory memory;
     private simulator.cpu.CPU cpu;
     private simulator.io.ProgramLoader loader;
+    private simulator.memory.Cache cache;
 
     public Interface() {
 
         // create simulator backend
         memory = new simulator.memory.Memory();
-        cpu = new simulator.cpu.CPU(memory);
+        cache = new simulator.memory.Cache(memory);
+        cpu = new simulator.cpu.CPU(cache);
         loader = new simulator.io.ProgramLoader();
         
         setTitle("CSCI 6461 Machine Simulator");
@@ -335,6 +337,7 @@ public class Interface extends JFrame implements IODevice{
 
     //copies register values to GUI fields
     private void refreshGUI() {
+        cacheArea.setText(cache.dumpCache());
 
         var regs = cpu.getRegisters();
 

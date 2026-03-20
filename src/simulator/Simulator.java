@@ -4,6 +4,7 @@ import simulator.cpu.CPU;
 import simulator.memory.Cache;
 import simulator.memory.Memory;
 import simulator.io.ProgramLoader;
+import simulator.io.ConsoleIODevice;
 
 public class Simulator {
 
@@ -21,6 +22,9 @@ public class Simulator {
 
         this.memory = cache;            // simulator uses cache as memory
         this.cpu = new CPU(cache);      // CPU uses cache too
+        
+        // Setup I/O device for stdin/stdout
+        this.cpu.setIODevice(new ConsoleIODevice());
     }
 
     public void start() {

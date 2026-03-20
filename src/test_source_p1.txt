@@ -73,7 +73,7 @@ READ20_LOOP:
 
         LDA     3,1,0          ; bump ARRPTR via R3 (scratch)
         AIR     3,1
-        STX     3,ARRPTR
+        STR     3,0,ARRPTR
         LDX     1,ARRPTR
 
         SOB     2,0,READ20_LOOP
@@ -81,7 +81,7 @@ READ20_LOOP:
 ; Print the 20 integers (one per line)
         LDR     2,0,COUNT
         LDA     3,0,ARR0
-        STX     3,ARRPTR
+        STR     3,0,ARRPTR
         LDX     1,ARRPTR
 
 PRINT20_LOOP:
@@ -90,7 +90,7 @@ PRINT20_LOOP:
 
         LDA     3,1,0
         AIR     3,1
-        STX     3,ARRPTR
+        STR     3,0,ARRPTR
         LDX     1,ARRPTR
 
         SOB     2,0,PRINT20_LOOP
@@ -104,7 +104,7 @@ PRINT20_LOOP:
         STR     0,0,TEMP       ; TEMP = remaining count
 
         LDA     2,0,ARR0
-        STX     2,ARRPTR
+        STR     2,0,ARRPTR
         LDX     1,ARRPTR
 
 FIND_LOOP:
@@ -129,7 +129,7 @@ FIND_LOOP:
 NO_UPDATE:
         LDA     2,1,0
         AIR     2,1
-        STX     2,ARRPTR
+        STR     2,0,ARRPTR
         LDX     1,ARRPTR
 
         LDR     0,0,TEMP

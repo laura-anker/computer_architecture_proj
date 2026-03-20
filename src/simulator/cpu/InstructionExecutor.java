@@ -189,15 +189,13 @@ public class InstructionExecutor {
     private void executeLDX(Instruction inst) {
         int ea = eaCalc.computeEA(inst, regs, memory);
         int value = memory.read(ea);
-        regs.getIX(inst.ix).set(value);
+        regs.getIX(inst.r).set(value);
     }
 
     //store index register to mem
     private void executeSTX(Instruction inst) {
-        //int value = regs.getIX(inst.r).get();
-        //memory.write(inst.address, (short)value);
         int ea = eaCalc.computeEA(inst, regs, memory);
-        int value = regs.getIX(inst.ix).get(); //change from .r to .ix
+        int value = regs.getIX(inst.r).get();
         memory.write(ea, (short)value);
     }
 

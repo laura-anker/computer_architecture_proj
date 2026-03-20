@@ -296,6 +296,15 @@ public class Assembler {
                     ix = resolve.apply(getOperand(splitData, index));
                     address = resolve.apply(getOperand(splitData, index + 1));
                 }
+                
+                // 6.5. JSR/SOB → r, address
+                else if (opcodeStr.equals("JSR") || opcodeStr.equals("SOB")) {
+
+                    r = resolve.apply(getOperand(splitData, index +1));
+                    address = resolve.apply(getOperand(splitData, index + 2));
+                    ix = 0;
+                    i = 0;
+                }
 
                 // 7. DEFAULT: MEMORY REFERENCE → r, ix, address[, i]
                 else {
@@ -343,7 +352,7 @@ public class Assembler {
                     instruction = (opcode << 10) | (r   << 8) | (address & 0x1F);
                 }
                 else if (opcodeStr.equals("LDX") || opcodeStr.equals("STX")) {
-                    instruction = (opcode << 10) | (ix  << 6) | (i   << 5) | (address & 0x3FF);
+                    instruction = (opcode << 10) | (ix  << 6) | (i   << 5) | (address & 0x1F);
                 }
                 else {
                     instruction = (opcode << 10) | (r << 8) | (ix << 6) | (i << 5) | (address & 0x3FF);

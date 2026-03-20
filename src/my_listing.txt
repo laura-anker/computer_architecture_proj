@@ -44,25 +44,25 @@
                         LOC     40
 000050  003006          LDR     2,0,COUNT
 000051  102107          LDX     1,ARRPTR
-000052  075400          JSR     3,READINT      ; returns integer in R0
+000052  031553          JSR     3,READINT      ; returns integer in R0
 000053  004100          STR     0,1,0          ; store into *ARRPTR
 000054  007500          LDA     3,1,0          ; bump ARRPTR via R3 (scratch)
 000055  015401          AIR     3,1
 000056  005407          STR     3,0,ARRPTR
 000057  102107          LDX     1,ARRPTR
-000060  034053          SOB     2,0,READ20_LOOP
+000060  035000          SOB     2,0,READ20_LOOP
 000061  003006          LDR     2,0,COUNT
 000062  007426          LDA     3,0,ARR0
 000063  005407          STR     3,0,ARRPTR
 000064  102107          LDX     1,ARRPTR
 000065  002100          LDR     0,1,0
-000066  131000          JSR     3,PRINTINT
+000066  031622          JSR     3,PRINTINT
 000067  007500          LDA     3,1,0
 000070  015401          AIR     3,1
 000071  005407          STR     3,0,ARRPTR
 000072  102107          LDX     1,ARRPTR
-000073  034066          SOB     2,0,PRINT20_LOOP
-000074  075400          JSR     3,READINT
+000073  035000          SOB     2,0,PRINT20_LOOP
+000074  031553          JSR     3,READINT
 000075  004010          STR     0,0,USERVAL
 000076  002006          LDR     0,0,COUNT
 000077  004013          STR     0,0,TEMP       ; TEMP = remaining count
@@ -72,7 +72,7 @@
 000103  002500          LDR     1,1,0         ; R1 = current array value
 000104  002010          LDR     0,0,USERVAL
 000105  012100          SMR     0,1,0         ; R0 = user - current
-000106  070000          JSR     3,ABS         ; R0 = abs difference
+000106  031540          JSR     3,ABS         ; R0 = abs difference
 000107  004016          STR     0,0,VALUE
 000110  003016          LDR     2,0,VALUE
 000111  013012          SMR     2,0,BESTDIFF   ; R2 = VALUE - BESTDIFF
@@ -90,9 +90,9 @@
 000125  004013          STR     0,0,TEMP
 000126  036104          JGE     0,0,FIND_LOOP
 000127  002010          LDR     0,0,USERVAL
-000130  131000          JSR     3,PRINTINT
+000130  031622          JSR     3,PRINTINT
 000131  002011          LDR     0,0,BESTVAL
-000132  131000          JSR     3,PRINTINT
+000132  031622          JSR     3,PRINTINT
 000133  000000          HLT
 000134  142400          IN      1,0
 000135  032000          RFS     0
@@ -112,7 +112,7 @@
 000153  006000          LDA     0,0,0
 000154  014001          AIR     0,1
 000155  004014          STR     0,0,SIGN
-000156  077000          JSR     3,READCHAR
+000156  031536          JSR     3,READCHAR
 000157  004415          STR     1,0,CHAR
 000160  003015          LDR     2,0,CHAR
 000161  013025          SMR     2,0,ASCII_NL
@@ -131,7 +131,7 @@
 000176  012022          SMR     0,0,ASCII_ZERO
 000177  004017          STR     0,0,DIGIT
 000200  002016          LDR     0,0,VALUE
-000201  072400          JSR     3,MULT10
+000201  031545          JSR     3,MULT10
 000202  004016          STR     0,0,VALUE
 000203  002016          LDR     0,0,VALUE
 000204  010017          AMR     0,0,DIGIT

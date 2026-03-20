@@ -14,6 +14,10 @@ public class InstructionDecoder {
         Instruction inst = new Instruction(opcode);
 
         switch (opcode) {
+            
+            case Opcode.HLT:
+                // No operands
+                break;
 
             // --------------------------------------------------
             // Load / Store / Memory Reference Format
@@ -32,13 +36,21 @@ public class InstructionDecoder {
             case Opcode.JSR:
             case Opcode.SOB:
             case Opcode.JGE:
-            case Opcode.LDX:
-            case Opcode.STX:
 
                 inst.r       = (w >> 8) & 0x3;
                 inst.ix      = (w >> 6) & 0x3;
                 inst.i       = (w >> 5) & 0x1;
-                inst.address =  w       & 0x1F;
+                inst.address =  w       & 0x3FF;
+
+                break;
+
+            case Opcode.LDX:
+            case Opcode.STX:
+                // For LDX/STX: Opcode | IX | I | Address
+                // The register field is in bits 6-7 (the ix position)
+                inst.r       = (w >> 6) & 0x3;
+                inst.i       = (w >> 5) & 0x1;
+                inst.address =  w       & 0x3FF;  // Only 5 bits for address (bits 4-0)
 
                 break;
 
@@ -51,7 +63,7 @@ public class InstructionDecoder {
             case Opcode.SIR:
 
                 inst.r       = (w >> 8) & 0x3;
-                inst.address =  w       & 0x1F;
+                inst.address =  w       & 0x3FF;
 
                 break;
 

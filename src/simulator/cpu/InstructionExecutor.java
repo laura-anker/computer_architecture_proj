@@ -246,7 +246,7 @@ public class InstructionExecutor {
             int ea = eaCalc.computeEA(inst, regs, memory);
             regs.getPC().set(ea);
 
-        }
+        }else regs.getGPR(3).set(regs.getPC().get() + 1);
     }
 
     //jump if not equal
@@ -257,7 +257,7 @@ public class InstructionExecutor {
             int ea = eaCalc.computeEA(inst, regs, memory);
             regs.getPC().set(ea);
 
-        }
+        }else regs.getGPR(3).set(regs.getPC().get() + 1);
     }
 
     //unconditional jump to address
@@ -271,16 +271,15 @@ public class InstructionExecutor {
 
     //subtract one and branch
     private void executeSOB(Instruction inst) {
-
         int value = regs.getGPR(inst.r).get() - 1;
-
         regs.getGPR(inst.r).set(value);
 
         if (value > 0) {
-
-            int ea = eaCalc.computeEA(inst, regs, memory);
-
+            // SOB uses a backward offset
+            int ea = regs.getPC().get() - inst.address;
             regs.getPC().set(ea);
+        } else {
+            regs.getPC().set(regs.getPC().get() + 1);
         }
     }
 
@@ -297,11 +296,10 @@ public class InstructionExecutor {
 
     //jump and save return address
     private void executeJSR(Instruction inst) {
-
         int ea = eaCalc.computeEA(inst, regs, memory);
 
-        // save return address
-        regs.getGPR(3).set(regs.getPC().get());
+        // save return address = next instruction
+        regs.getGPR(3).set(regs.getPC().get() + 1);
 
         // jump to subroutine
         regs.getPC().set(ea);
@@ -327,7 +325,7 @@ public class InstructionExecutor {
             int ea = eaCalc.computeEA(inst, regs, memory);
 
             regs.getPC().set(ea);
-        }
+        }else regs.getGPR(3).set(regs.getPC().get() + 1);
     }
 
     // REGISTER OPERATIONS

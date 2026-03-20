@@ -1,0 +1,389 @@
+                        LOC     6
+                
+                ; ============================================================
+                ; Program 1 — Read 20 signed integers, print them, read a user
+                ; value, find the array element closest to the user value, print
+                ; the user value and the closest value. Handles negatives and
+                ; assembles integers from digit characters (range -32768..32767).
+                ; ============================================================
+                
+000006  000024  COUNT:      DATA    20
+000007  000026  ARRPTR:     DATA    ARR0
+000010  000000  USERVAL:    DATA    0
+000011  000000  BESTVAL:    DATA    0
+000012  077777  BESTDIFF:   DATA    32767
+000013  000000  TEMP:       DATA    0
+000014  000000  SIGN:       DATA    0
+000015  000000  CHAR:       DATA    0
+000016  000000  VALUE:      DATA    0
+000017  000000  DIGIT:      DATA    0
+000020  000012  TEN:        DATA    10
+000021  177777  NEGONE:     DATA    -1
+                
+000022  000060  ASCII_ZERO: DATA    48
+000023  000071  ASCII_NINE: DATA    57
+000024  000055  ASCII_MINUS: DATA   45
+000025  000012  ASCII_NL:   DATA    10
+                
+                ; 20-element array
+000026  000000  ARR0:       DATA    0
+000027  000000  ARR1:       DATA    0
+000030  000000  ARR2:       DATA    0
+000031  000000  ARR3:       DATA    0
+000032  000000  ARR4:       DATA    0
+000033  000000  ARR5:       DATA    0
+000034  000000  ARR6:       DATA    0
+000035  000000  ARR7:       DATA    0
+000036  000000  ARR8:       DATA    0
+000037  000000  ARR9:       DATA    0
+000040  000000  ARR10:      DATA    0
+000041  000000  ARR11:      DATA    0
+000042  000000  ARR12:      DATA    0
+000043  000000  ARR13:      DATA    0
+000044  000000  ARR14:      DATA    0
+000045  000000  ARR15:      DATA    0
+000046  000000  ARR16:      DATA    0
+000047  000000  ARR17:      DATA    0
+000050  000000  ARR18:      DATA    0
+000051  000000  ARR19:      DATA    0
+                
+                ; buffers for printing digits
+000052  000000  DIGBUF0:    DATA 0
+000053  000000  DIGBUF1:    DATA 0
+000054  000000  DIGBUF2:    DATA 0
+000055  000000  DIGBUF3:    DATA 0
+000056  000000  DIGBUF4:    DATA 0
+000057  000000  DIGBUF5:    DATA 0
+                
+                ; ============================================================
+                ; MAIN
+                ; ============================================================
+                
+                        LOC     40
+                
+                START:
+                        ; R2 = COUNT, R1 = pointer to next array slot
+000050  003006          LDR     2,0,COUNT
+000051  102107          LDX     1,ARRPTR
+                
+                ; Read 20 integers into array (assembled from digit characters)
+                READ20_LOOP:
+000052  102140  ; LDX 1,96 (base addr for: JSR     3,READINT      ; returns integer in R0)
+000053  031513          JSR     3,READINT      ; returns integer in R0
+000054  004100          STR     0,1,0          ; store into *ARRPTR
+                
+000055  007500          LDA     3,1,0          ; bump ARRPTR via R3 (scratch)
+000056  015401          AIR     3,1
+000057  104307          STX     3,ARRPTR
+000060  102107          LDX     1,ARRPTR
+                
+000061  102140  ; LDX 1,32 (base addr for: SOB     2,0,READ20_LOOP)
+000062  035113          SOB     2,0,READ20_LOOP
+                
+                ; Print the 20 integers (one per line)
+000063  003006          LDR     2,0,COUNT
+000064  007426          LDA     3,0,ARR0
+000065  104307          STX     3,ARRPTR
+000066  102107          LDX     1,ARRPTR
+                
+                PRINT20_LOOP:
+000067  002100          LDR     0,1,0
+000070  102300  ; LDX 1,128 (base addr for: JSR     3,PRINTINT)
+000071  031522          JSR     3,PRINTINT
+                
+000072  007500          LDA     3,1,0
+000073  015401          AIR     3,1
+000074  104307          STX     3,ARRPTR
+000075  102107          LDX     1,ARRPTR
+                
+000076  102140  ; LDX 1,32 (base addr for: SOB     2,0,PRINT20_LOOP)
+000077  035126          SOB     2,0,PRINT20_LOOP
+                
+                ; Read user search value
+000100  102140  ; LDX 1,96 (base addr for: JSR     3,READINT)
+000101  031513          JSR     3,READINT
+000102  004010          STR     0,0,USERVAL
+                
+                ; Find closest — iterate array, compute abs(user - element)
+000103  002006          LDR     0,0,COUNT
+000104  004013          STR     0,0,TEMP       ; TEMP = remaining count
+                
+000105  007026          LDA     2,0,ARR0
+000106  104207          STX     2,ARRPTR
+000107  102107          LDX     1,ARRPTR
+                
+                FIND_LOOP:
+000110  002500          LDR     1,1,0         ; R1 = current array value
+000111  002010          LDR     0,0,USERVAL
+000112  012100          SMR     0,1,0         ; R0 = user - current
+                
+000113  102140  ; LDX 1,96 (base addr for: JSR     3,ABS         ; R0 = abs difference)
+000114  031500          JSR     3,ABS         ; R0 = abs difference
+000115  004016          STR     0,0,VALUE
+                
+000116  003016          LDR     2,0,VALUE
+000117  013012          SMR     2,0,BESTDIFF   ; R2 = VALUE - BESTDIFF
+000120  102100  ; LDX 1,64 (base addr for: JGE     2,0,NO_UPDATE  ; if VALUE >= BESTDIFF, skip)
+000121  037121          JGE     2,0,NO_UPDATE  ; if VALUE >= BESTDIFF, skip
+                        ; else VALUE < BESTDIFF → update
+                
+000122  002016          LDR     0,0,VALUE
+000123  004012          STR     0,0,BESTDIFF
+                
+000124  002100          LDR     0,1,0
+000125  004011          STR     0,0,BESTVAL
+                
+                NO_UPDATE:
+000126  007100          LDA     2,1,0
+000127  015001          AIR     2,1
+000130  104207          STX     2,ARRPTR
+000131  102107          LDX     1,ARRPTR
+                
+000132  002013          LDR     0,0,TEMP
+000133  016001          SIR     0,1
+000134  004013          STR     0,0,TEMP
+                
+000135  102100  ; LDX 1,64 (base addr for: JGE     0,0,FIND_LOOP)
+000136  036104          JGE     0,0,FIND_LOOP
+                
+                ; Print user value and closest value
+000137  002010          LDR     0,0,USERVAL
+000140  102300  ; LDX 1,128 (base addr for: JSR     3,PRINTINT)
+000141  031522          JSR     3,PRINTINT
+                
+000142  002011          LDR     0,0,BESTVAL
+000143  102300  ; LDX 1,128 (base addr for: JSR     3,PRINTINT)
+000144  031522          JSR     3,PRINTINT
+                
+000145  000000          HLT
+                
+                ; ============================================================
+                ; SUBROUTINES
+                ; ============================================================
+                
+                READCHAR:
+000146  142400          IN      1,0
+000147  032000          RFS     0
+                
+                ABS:
+                        ; absolute value of R0
+000150  102140  ; LDX 1,96 (base addr for: JGE     0,0,ABS_RET)
+000151  036104          JGE     0,0,ABS_RET
+000152  002421          LDR     1,0,NEGONE
+000153  160100          MLT     0,1
+                ABS_RET:
+000154  032000          RFS     0
+                
+                MULT10:
+000155  002420          LDR     1,0,TEN
+000156  160100          MLT     0,1
+000157  032000          RFS     0
+                
+                PRINTNEWLINE:
+000160  002425          LDR     1,0,ASCII_NL
+000161  144400          OUT     1,0
+000162  032000          RFS     0
+                
+                ; READINT — read signed integer into R0
+                ; Assembles digits until newline; supports optional leading '-'
+                READINT:
+000163  005413          STR     3,0,TEMP        ; save return address in TEMP
+                
+000164  006000          LDA     0,0,0
+000165  004016          STR     0,0,VALUE
+                
+000166  006000          LDA     0,0,0
+000167  014001          AIR     0,1
+000170  004014          STR     0,0,SIGN
+                
+                READINT_LOOP:
+000171  102100  ; LDX 1,64 (base addr for: JSR     3,READCHAR)
+000172  031536          JSR     3,READCHAR
+000173  004415          STR     1,0,CHAR
+                
+000174  003015          LDR     2,0,CHAR
+000175  013025          SMR     2,0,ASCII_NL
+000176  102300  ; LDX 1,128 (base addr for: JZ      2,0,READINT_DONE)
+000177  021115          JZ      2,0,READINT_DONE
+                
+000200  003015          LDR     2,0,CHAR
+000201  013024          SMR     2,0,ASCII_MINUS
+000202  102300  ; LDX 1,128 (base addr for: JZ      2,0,SET_NEG)
+000203  021112          JZ      2,0,SET_NEG
+                
+000204  003015          LDR     2,0,CHAR
+000205  013022          SMR     2,0,ASCII_ZERO
+000206  102140  ; LDX 1,96 (base addr for: JGE     2,0,CHECK_DIGIT)
+000207  037135          JGE     2,0,CHECK_DIGIT
+000210  076400          JMA     READINT_LOOP
+                
+                CHECK_DIGIT:
+000211  003015          LDR     2,0,CHAR
+000212  013023          SMR     2,0,ASCII_NINE
+000213  102140  ; LDX 1,96 (base addr for: JGE     2,0,READINT_LOOP)
+000214  037121          JGE     2,0,READINT_LOOP
+                
+000215  002015          LDR     0,0,CHAR
+000216  012022          SMR     0,0,ASCII_ZERO
+000217  004017          STR     0,0,DIGIT
+                
+000220  002016          LDR     0,0,VALUE
+000221  102140  ; LDX 1,96 (base addr for: JSR     3,MULT10)
+000222  031505          JSR     3,MULT10
+000223  004016          STR     0,0,VALUE
+                
+000224  002016          LDR     0,0,VALUE
+000225  010017          AMR     0,0,DIGIT
+000226  004016          STR     0,0,VALUE
+                
+000227  076400          JMA     READINT_LOOP
+                
+                SET_NEG:
+000230  002021          LDR     0,0,NEGONE
+000231  004014          STR     0,0,SIGN
+000232  076400          JMA     READINT_LOOP
+                
+                READINT_DONE:
+000233  002016          LDR     0,0,VALUE
+000234  002414          LDR     1,0,SIGN
+000235  160100          MLT     0,1
+                
+000236  003413          LDR     3,0,TEMP
+000237  032000          RFS     0
+                
+                ; PRINTINT — print integer in R0
+                PRINTINT:
+000240  005413          STR     3,0,TEMP        ; save return address
+                
+                        ; handle negative
+000241  102300  ; LDX 1,128 (base addr for: JGE     0,0,PI_POS)
+000242  036131          JGE     0,0,PI_POS
+                
+000243  002424          LDR     1,0,ASCII_MINUS
+000244  144400          OUT     1,0
+                
+000245  002421          LDR     1,0,NEGONE
+000246  160100          MLT     0,1
+                
+                PI_POS:
+                        ; if R0 == 0, print '0'
+000247  102300  ; LDX 1,128 (base addr for: JNE     0,0,PI_CONVERT)
+000250  022136          JNE     0,0,PI_CONVERT
+000251  002422          LDR     1,0,ASCII_ZERO
+000252  144400          OUT     1,0
+000253  166400          JMA     PI_DONE
+                
+                PI_CONVERT:
+000254  006400          LDA     1,0,0
+000255  004413          STR     1,0,TEMP        ; TEMP = digit count
+                
+                PI_DIV_LOOP:
+000256  002420          LDR     1,0,TEN
+000257  162100          DVD     0,1             ; quotient in R0, remainder in R1
+000260  004417          STR     1,0,DIGIT       ; remainder
+                
+                        ; convert digit to ASCII
+000261  002417          LDR     1,0,DIGIT
+000262  010422          AMR     1,0,ASCII_ZERO
+                
+                        ; store into DIGBUF[TEMP]
+000263  003013          LDR     2,0,TEMP
+000264  102340  ; LDX 1,160 (base addr for: JZ      2,0,STORE0)
+000265  021122          JZ      2,0,STORE0
+000266  017001          SIR     2,1
+000267  102340  ; LDX 1,160 (base addr for: JZ      2,0,STORE1)
+000270  021124          JZ      2,0,STORE1
+000271  017001          SIR     2,1
+000272  102340  ; LDX 1,160 (base addr for: JZ      2,0,STORE2)
+000273  021126          JZ      2,0,STORE2
+000274  017001          SIR     2,1
+000275  102340  ; LDX 1,160 (base addr for: JZ      2,0,STORE3)
+000276  021130          JZ      2,0,STORE3
+000277  017001          SIR     2,1
+000300  102340  ; LDX 1,160 (base addr for: JZ      2,0,STORE4)
+000301  021132          JZ      2,0,STORE4
+000302  136000          JMA     STORE5
+                
+000303  102140  ; LDX 1,32 (base addr for: STORE0: STR 1,0,DIGBUF0)
+000304  004512  STORE0: STR 1,0,DIGBUF0
+000305  136400          JMA AFTER_STORE
+000306  102140  ; LDX 1,32 (base addr for: STORE1: STR 1,0,DIGBUF1)
+000307  004513  STORE1: STR 1,0,DIGBUF1
+000310  136400          JMA AFTER_STORE
+000311  102140  ; LDX 1,32 (base addr for: STORE2: STR 1,0,DIGBUF2)
+000312  004514  STORE2: STR 1,0,DIGBUF2
+000313  136400          JMA AFTER_STORE
+000314  102140  ; LDX 1,32 (base addr for: STORE3: STR 1,0,DIGBUF3)
+000315  004515  STORE3: STR 1,0,DIGBUF3
+000316  136400          JMA AFTER_STORE
+000317  102140  ; LDX 1,32 (base addr for: STORE4: STR 1,0,DIGBUF4)
+000320  004516  STORE4: STR 1,0,DIGBUF4
+000321  136400          JMA AFTER_STORE
+000322  102140  ; LDX 1,32 (base addr for: STORE5: STR 1,0,DIGBUF5)
+000323  004517  STORE5: STR 1,0,DIGBUF5
+                
+                AFTER_STORE:
+                        ; TEMP++
+000324  002413          LDR     1,0,TEMP
+000325  014401          AIR     1,1
+000326  004413          STR     1,0,TEMP
+                
+                        ; continue if quotient > 0
+000327  102340  ; LDX 1,160 (base addr for: JNE     0,0,PI_DIV_LOOP)
+000330  022100          JNE     0,0,PI_DIV_LOOP
+                
+                PI_PRINT_LOOP:
+000331  002413          LDR     1,0,TEMP
+000332  016401          SIR     1,1
+000333  004413          STR     1,0,TEMP
+                
+000334  003013          LDR     2,0,TEMP
+000335  102300  ; LDX 1,192 (base addr for: JZ      2,0,PRINT0)
+000336  021121          JZ      2,0,PRINT0
+000337  017001          SIR     2,1
+000340  102300  ; LDX 1,192 (base addr for: JZ      2,0,PRINT1)
+000341  021123          JZ      2,0,PRINT1
+000342  017001          SIR     2,1
+000343  102300  ; LDX 1,192 (base addr for: JZ      2,0,PRINT2)
+000344  021125          JZ      2,0,PRINT2
+000345  017001          SIR     2,1
+000346  102300  ; LDX 1,192 (base addr for: JZ      2,0,PRINT3)
+000347  021127          JZ      2,0,PRINT3
+000350  017001          SIR     2,1
+000351  102300  ; LDX 1,192 (base addr for: JZ      2,0,PRINT4)
+000352  021131          JZ      2,0,PRINT4
+000353  177400          JMA     PRINT5
+                
+000354  102140  ; LDX 1,32 (base addr for: PRINT0: LDR 1,0,DIGBUF0)
+000355  002512  PRINT0: LDR 1,0,DIGBUF0
+000356  176000          JMA DO_PRINT
+000357  102140  ; LDX 1,32 (base addr for: PRINT1: LDR 1,0,DIGBUF1)
+000360  002513  PRINT1: LDR 1,0,DIGBUF1
+000361  176000          JMA DO_PRINT
+000362  102140  ; LDX 1,32 (base addr for: PRINT2: LDR 1,0,DIGBUF2)
+000363  002514  PRINT2: LDR 1,0,DIGBUF2
+000364  176000          JMA DO_PRINT
+000365  102140  ; LDX 1,32 (base addr for: PRINT3: LDR 1,0,DIGBUF3)
+000366  002515  PRINT3: LDR 1,0,DIGBUF3
+000367  176000          JMA DO_PRINT
+000370  102140  ; LDX 1,32 (base addr for: PRINT4: LDR 1,0,DIGBUF4)
+000371  002516  PRINT4: LDR 1,0,DIGBUF4
+000372  176000          JMA DO_PRINT
+000373  102140  ; LDX 1,32 (base addr for: PRINT5: LDR 1,0,DIGBUF5)
+000374  002517  PRINT5: LDR 1,0,DIGBUF5
+                
+                DO_PRINT:
+000375  144400          OUT     1,0
+                
+                        ; if TEMP != 0, keep printing; else we’re done
+000376  002413          LDR     1,0,TEMP
+000377  102300  ; LDX 1,192 (base addr for: JNE     1,0,PI_PRINT_LOOP)
+000400  022503          JNE     1,0,PI_PRINT_LOOP
+000401  166400          JMA     PI_DONE
+                
+                PI_DONE:
+000402  002425          LDR     1,0,ASCII_NL
+000403  144400          OUT     1,0
+                
+000404  003413          LDR     3,0,TEMP
+000405  032000          RFS     0

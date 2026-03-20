@@ -143,13 +143,13 @@ public class Assembler {
     }
 //end opcode map
 
-    // helper to safely get operand
+    // Helper to safely get operand
     String getOperand(String[] arr, int idx) {
         if (idx >= arr.length) return null;
         return arr[idx];
     }
 
-    // helper to resolve label or number
+    // Helper to resolve label or number
     java.util.function.Function<String, Integer> resolve = (operand) -> {
         if (operand == null) return 0;
         if (dictionary.containsKey(operand)) {
@@ -158,222 +158,209 @@ public class Assembler {
         return Integer.parseInt(operand);
     };
 
-//start pass 2
-    public boolean pass2(File sourceFile){
-        //Set code location to 0
-        int codeLocation = 0; // set code location to 0 at start
+    // Helper to check if address needs splitting (> 31 requires 5+ bits)
+    boolean needsSplitting(int address) {
+        return address > 31;
+    }
 
-        //Read a line of the file
-        try (Scanner myreader = new Scanner(sourceFile);//this try automatically closes these when done even if error happens
-            PrintWriter listingFile = new PrintWriter("test_listing_p1.txt");
-            PrintWriter loadFile = new PrintWriter("test_load_p1.txt")) {
-            // read the file line by line
-            while (myreader.hasNextLine()) {
-                String originalLine = myreader.nextLine();
+    // Helper to calculate base address (upper bits)
+    int getBaseAddress(int address) {
+        return address & 0xFFE0; // mask to keep upper bits, zero out lower 5 bits
+    }
+
+    // Helper to calculate offset (lower 5 bits)
+    int getOffset(int address) {
+        return address & 0x1F; // keep only lower 5 bits
+    }
+
+    // Helper to emit LDX instruction to load base address into index register
+    void emitLDXInstruction(int codeLocation, int indexReg, int baseAddress,
+                            PrintWriter listingFile, PrintWriter loadFile, String originalLine) {
+        Integer ldxOpcode = opcodeMap.get("LDX");
+        int instruction = (ldxOpcode << 10) | (indexReg << 6) | (baseAddress & 0x3FF);
+        listingFile.printf("%06o  %06o  ; LDX %d,%d (base addr for: %s)%n", 
+                        codeLocation, instruction, indexReg, baseAddress, originalLine.trim());
+        loadFile.printf("%06o  %06o%n", codeLocation, instruction);
+    }
+    
+
+//start pass 2
+    public boolean pass2(File sourceFile) {
+        int codeLocation = 0;
+
+        try (Scanner myReader = new Scanner(sourceFile);
+            PrintWriter listingFile = new PrintWriter("test_listing_p2_fixed.txt");
+            PrintWriter loadFile = new PrintWriter("test_load_p2_fixed.txt")) {
+
+            while (myReader.hasNextLine()) {
+                String originalLine = myReader.nextLine();
                 String line = originalLine;
 
-                // strip comments for parsing
+                // Strip comments
                 int commentPos = line.indexOf(';');
+                String comment = "";
                 if (commentPos != -1) {
+                    comment = line.substring(commentPos);
                     line = line.substring(0, commentPos);
                 }
-                //skip empty lines
                 if (line.trim().isEmpty()) {
+                    listingFile.printf("                %s%n", originalLine);
                     continue;
                 }
 
-
-                //Use the split command to break the line into it parts
                 String[] splitData = line.trim().split("[\\s,]+");
                 int index = 0;
 
-                // handle label field if present
+                // Skip label if present
                 if (splitData[index].endsWith(":")) {
-                    index++; // skip label
+                    index++;
                     if (index >= splitData.length) {
-                    continue; // line only had label
+                        listingFile.printf("                %s%n", originalLine);
+                        continue;
                     }
                 }
 
-                
-
-                String opcodeStr = splitData[index].toUpperCase(); // get opcode
+                String opcodeStr = splitData[index].toUpperCase();
                 index++;
 
-                //handle loc
+                // LOC directive
                 if (opcodeStr.equals("LOC")) {
                     if (index < splitData.length) {
                         codeLocation = Integer.parseInt(splitData[index]);
-                        listingFile.printf("                %s%n", originalLine);//print line listing file only
-                    
-                    }//end if
-                    continue; // loc does not generate code
-                }//end if
-                //handle data
-                else if (opcodeStr.equals("DATA")) {
-                    // data n -> generate a word with n
-                    int dataValue = 0;
-                    if (index < splitData.length) {
-                        String operand = splitData[index];
-                        // check if operand is a label
-                        if (dictionary.containsKey(operand)) {
-                            dataValue = dictionary.get(operand); // replace with label address
-                        }//end if 
-                        else {
-                            dataValue = Integer.parseInt(operand); // decimal value
-                        }//end else
-                    }//end if
-
-                    // write to listing file in octal (mask to 16 bits to handle negative/data values)
-                    listingFile.printf("%06o  %06o  %s%n", codeLocation, (dataValue & 0xFFFF), originalLine);
-                    // write to load file in octal (mask to 16 bits)
-                    loadFile.printf("%06o  %06o%n", codeLocation, (dataValue & 0xFFFF));
-                    codeLocation++; // increment location
+                        listingFile.printf("                %s%n", originalLine);
+                    }
                     continue;
                 }
 
-                // look up opcode in the map
+                // DATA directive
+                if (opcodeStr.equals("DATA")) {
+                    int dataValue = 0;
+                    if (index < splitData.length) {
+                        String operand = splitData[index];
+                        if (dictionary.containsKey(operand)) dataValue = dictionary.get(operand);
+                        else dataValue = Integer.parseInt(operand);
+                    }
+                    listingFile.printf("%06o  %06o  %s%n", codeLocation, (dataValue & 0xFFFF), originalLine);
+                    loadFile.printf("%06o  %06o%n", codeLocation, (dataValue & 0xFFFF));
+                    codeLocation++;
+                    continue;
+                }
+
+                // Lookup opcode
                 Integer opcode = opcodeMap.get(opcodeStr);
                 if (opcode == null) {
                     System.out.println("unknown instruction: " + opcodeStr);
-                    listingFile.close();//not sure if closes are necessary?
-                    loadFile.close();
-                    return false; // stop if invalid opcode
-                }//end if
+                    return false;
+                }
 
-                // findfirst real instruction address
-                //if (detectedStartAddress == -1) {
-                //    detectedStartAddress = codeLocation;
-                //}
-
-
-                // default fields
+                // Default instruction fields
                 int r = 0, ix = 0, i = 0, address = 0;
-                int ry = 0;     // for register-to-register
-                int al = 0;     // for shift/rotate
-                int lr = 0;
+                int ry = 0, al = 0, lr = 0;
 
-                // -------- INSTRUCTION TYPES --------
+                // Parse operands
+                String op1 = getOperand(splitData, index);
+                String op2 = getOperand(splitData, index + 1);
+                String op3 = getOperand(splitData, index + 2);
+                String op4 = getOperand(splitData, index + 3);
 
-                // 1. ZERO OPERAND
-                if (opcodeStr.equals("HLT")) {
-                    // nothing to do
-                }
-
-                // 2. I/O: IN, OUT, CHK → r, device
-                else if (opcodeStr.equals("IN") || opcodeStr.equals("OUT") || opcodeStr.equals("CHK")) {
-                    r = resolve.apply(getOperand(splitData, index));
-                    address = resolve.apply(getOperand(splitData, index + 1));
-                }
-
-                // 3. IMMEDIATE: AIR, SIR → r, immediate
-                else if (opcodeStr.equals("AIR") || opcodeStr.equals("SIR")) {
-                    r = resolve.apply(getOperand(splitData, index));
-                    address = resolve.apply(getOperand(splitData, index + 1));
-                }
-
-                // 4. REGISTER-TO-REGISTER
-                else if (opcodeStr.equals("MLT") || opcodeStr.equals("DVD") ||
-                        opcodeStr.equals("TRR") || opcodeStr.equals("AND") ||
-                        opcodeStr.equals("ORR")) {
-
-                    r = resolve.apply(getOperand(splitData, index));
-                    ry = resolve.apply(getOperand(splitData, index + 1));
-                }
-
-                // 5. SHIFT / ROTATE: SRC, RRC → r, al, lr, count
-                else if (opcodeStr.equals("SRC") || opcodeStr.equals("RRC")) {
-
-                    r  = resolve.apply(getOperand(splitData, index));
-                    al = resolve.apply(getOperand(splitData, index + 1));
-                    lr = resolve.apply(getOperand(splitData, index + 2));
-                    address = resolve.apply(getOperand(splitData, index + 3)); // count
-                }
-
-                // 6. LDX/STX → ix, address
-                else if (opcodeStr.equals("LDX") || opcodeStr.equals("STX")) {
-
-                    ix = resolve.apply(getOperand(splitData, index));
-                    address = resolve.apply(getOperand(splitData, index + 1));
-                }
-
-                // 7. DEFAULT: MEMORY REFERENCE → r, ix, address[, i]
-                else {
-
-                    r  = resolve.apply(getOperand(splitData, index));
-                    ix = resolve.apply(getOperand(splitData, index + 1));
-                    address = resolve.apply(getOperand(splitData, index + 2));
-
-                    String iField = getOperand(splitData, index + 3);
-                    if (iField != null) {
-                        i = Integer.parseInt(iField);
-                        if (i != 0 && i != 1) {
-                            System.out.println("invalid indirect bit");
-                            return false;
+                switch (opcodeStr) {
+                    case "HLT":
+                        break;
+                    case "IN": case "OUT": case "CHK":
+                        r = resolve.apply(op1);
+                        address = resolve.apply(op2);
+                        break;
+                    case "AIR": case "SIR":
+                        r = resolve.apply(op1);
+                        address = resolve.apply(op2);
+                        break;
+                    case "MLT": case "DVD": case "TRR": case "AND": case "ORR":
+                        r = resolve.apply(op1);
+                        ry = resolve.apply(op2);
+                        break;
+                    case "SRC": case "RRC":
+                        r  = resolve.apply(op1);
+                        al = resolve.apply(op2);
+                        lr = resolve.apply(op3);
+                        address = resolve.apply(op4);
+                        break;
+                    case "JSR":
+                        r = resolve.apply(op1); // typically 3
+                        address = resolve.apply(op2);
+                        break;
+                    case "LDX": case "STX":
+                        ix = resolve.apply(op1);
+                        address = resolve.apply(op2);
+                        break;
+                    default: // memory reference
+                        r  = resolve.apply(op1);
+                        ix = resolve.apply(op2);
+                        address = resolve.apply(op3);
+                        if (op4 != null) {
+                            i = Integer.parseInt(op4);
+                            if (i != 0 && i != 1) {
+                                System.out.println("invalid indirect bit");
+                                return false;
+                            }
                         }
-                    }
+                        break;
                 }
-                
 
-                //build our 16-bit instruction
-                //int instruction = (opcode << 10) | (r << 8) | (ix << 6) | (i << 5) | (address & 0x1F);
+                // Handle base+offset
+                if (needsSplitting(address)) {
+                    int baseAddress = getBaseAddress(address);
+                    int offset = getOffset(address);
+
+                    // Emit LDX 1, baseAddress
+                    emitLDXInstruction(codeLocation, 1, baseAddress, listingFile, loadFile, originalLine);
+                    codeLocation++;
+
+                    ix = 1;
+                    i = 0;
+                    address = offset;
+                }
+
+                // Build machine instruction
                 int instruction = 0;
-
-                if (opcodeStr.equals("MLT") || opcodeStr.equals("DVD") ||
-                    opcodeStr.equals("TRR") || opcodeStr.equals("AND") ||
-                    opcodeStr.equals("ORR")) {
-
-                    instruction = (opcode << 10) | (r << 8) | (ry << 6);
-
-                }
-                else if (opcodeStr.equals("SRC") || opcodeStr.equals("RRC")) {
-
-                    instruction = (opcode << 10) | (r << 8) | (al << 7) | (lr << 6) | (address & 0x3F);
-
-                }
-                else if (opcodeStr.equals("IN") || opcodeStr.equals("OUT") || opcodeStr.equals("CHK")) {
-
-                    instruction = (opcode << 10) | (r << 8) | (address & 0xFF);
-
-                }
-                else if (opcodeStr.equals("TRAP")) {
-                    instruction = (opcode << 10) | (address & 0xF);
-                }
-                else if (opcodeStr.equals("AIR") || opcodeStr.equals("SIR")) {
-                    instruction = (opcode << 10) | (r   << 8) | (address & 0x1F);
-                }
-                else if (opcodeStr.equals("LDX") || opcodeStr.equals("STX")) {
-                    instruction = (opcode << 10) | (ix  << 6) | (i   << 5) | (address & 0x3FF);
-                }
-                else {
-                    instruction = (opcode << 10) | (r << 8) | (ix << 6) | (i << 5) | (address & 0x3FF);
+                switch (opcodeStr) {
+                    case "HLT":
+                        instruction = opcode;
+                        break;
+                    case "MLT": case "DVD": case "TRR": case "AND": case "ORR":
+                        instruction = (opcode << 10) | (r << 8) | (ry << 6);
+                        break;
+                    case "SRC": case "RRC":
+                        instruction = (opcode << 10) | (r << 8) | (al << 7) | (lr << 6) | (address & 0x3F);
+                        break;
+                    case "IN": case "OUT": case "CHK":
+                        instruction = (opcode << 10) | (r << 8) | (address & 0xFF);
+                        break;
+                    case "TRAP":
+                        instruction = (opcode << 10) | (address & 0xF);
+                        break;
+                    case "AIR": case "SIR":
+                        instruction = (opcode << 10) | (r << 8) | (address & 0x1F);
+                        break;
+                    case "LDX": case "STX":
+                        instruction = (opcode << 10) | (ix << 6) | (i << 5) | (address & 0x3F);
+                        break;
+                    default:
+                        instruction = (opcode << 10) | (r << 8) | (ix << 6) | (i << 5) | (address & 0x1F);
+                        break;
                 }
 
-                // write listing file in octal
+                // Emit instruction
                 listingFile.printf("%06o  %06o  %s%n", codeLocation, instruction, originalLine);
-                // write load file in octal
                 loadFile.printf("%06o  %06o%n", codeLocation, instruction);
-                codeLocation++; // increment location
-                
-            }//end while
-            // START directive at end of load file
-            //loadFile.printf("START %06o%n", detectedStartAddress);
-        } //end try
-    
+                codeLocation++;
+            }
 
-        catch (FileNotFoundException e) { //error handling in reading file
-            System.out.println("an error occurred reading the file");
+        } catch (Exception e) {
+            System.out.println("Error in pass2: " + e.getMessage());
             e.printStackTrace();
             return false;
+        }
 
-        } //end catch 
-
-        catch (NumberFormatException e) { //error handling in source
-            System.out.println("invalid number in source file");
-            e.printStackTrace(); 
-            return false;
-        }//end catch 
-        
         return true;
     }
 //end pass 2

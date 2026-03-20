@@ -165,8 +165,8 @@ public class Assembler {
 
         //Read a line of the file
         try (Scanner myreader = new Scanner(sourceFile);//this try automatically closes these when done even if error happens
-            PrintWriter listingFile = new PrintWriter("test_listing_p1.txt");
-            PrintWriter loadFile = new PrintWriter("test_load_p1.txt")) {
+            PrintWriter listingFile = new PrintWriter("test_listing_part2_2.txt");
+            PrintWriter loadFile = new PrintWriter("test_load_part2_2.txt")) {
             // read the file line by line
             while (myreader.hasNextLine()) {
                 String originalLine = myreader.nextLine();
@@ -246,12 +246,14 @@ public class Assembler {
                 //    detectedStartAddress = codeLocation;
                 //}
 
-
                 // default fields
                 int r = 0, ix = 0, i = 0, address = 0;
                 int ry = 0;     // for register-to-register
                 int al = 0;     // for shift/rotate
                 int lr = 0;
+
+                int count = 0;  // for shift/rotate
+                int deviceId = 0; // for IO
 
                 // -------- INSTRUCTION TYPES --------
 
@@ -280,14 +282,13 @@ public class Assembler {
                     r = resolve.apply(getOperand(splitData, index));
                     ry = resolve.apply(getOperand(splitData, index + 1));
                 }
-
                 // 5. SHIFT / ROTATE: SRC, RRC → r, al, lr, count
                 else if (opcodeStr.equals("SRC") || opcodeStr.equals("RRC")) {
 
-                    r  = resolve.apply(getOperand(splitData, index));
-                    al = resolve.apply(getOperand(splitData, index + 1));
-                    lr = resolve.apply(getOperand(splitData, index + 2));
-                    address = resolve.apply(getOperand(splitData, index + 3)); // count
+                    r     = resolve.apply(getOperand(splitData, index));
+                    count = resolve.apply(getOperand(splitData, index + 1));
+                    lr    = resolve.apply(getOperand(splitData, index + 2));
+                    al    = resolve.apply(getOperand(splitData, index + 3));
                 }
 
                 // 6. LDX/STX → ix, address
@@ -328,7 +329,7 @@ public class Assembler {
                 }
                 else if (opcodeStr.equals("SRC") || opcodeStr.equals("RRC")) {
 
-                    instruction = (opcode << 10) | (r << 8) | (al << 7) | (lr << 6) | (address & 0x3F);
+                    instruction = (opcode << 10) | (r << 8) | (al << 7) | (lr << 6) | (count & 0xF);
 
                 }
                 else if (opcodeStr.equals("IN") || opcodeStr.equals("OUT") || opcodeStr.equals("CHK")) {
@@ -379,7 +380,7 @@ public class Assembler {
 //end pass 2
 
     public static void main(String[] args){
-        File sourceFile = new File("test_source_p1.txt"); //hard coding which source file to read
+        File sourceFile = new File("test_source_part2_2.txt"); //hard coding which source file to read
         Assembler a = new Assembler();
         a.run(sourceFile);
     }

@@ -1,0 +1,39 @@
+LOC 6 ; BEGIN AT LOCATION 6
+
+; === Memory setup ===
+Data 10      ; LOCATION 6
+Data 5       ; LOCATION 7
+Data 15      ; LOCATION 8
+Data 0       ; LOCATION 9
+Data End     ; LOCATION 10 = 1024
+
+; === LDX / STX ===
+LDX 1,6      ; X1 = 10
+STX 1,7      ; Store X1 into LOC 7
+
+; === LDR / STR / LDA ===
+LDR 0,0,6    ; R0 = 10
+STR 0,0,9    ; Store R0 into LOC 9
+LDA 2,0,8    ; R2 = 8
+
+; === AMR / SMR / AIR / SIR ===
+AIR 3,5      ; R3 = 5
+AMR 3,0,6    ; R3 = 5 + MEM[6] = 15
+SIR 3,3      ; R3 = R3 - 3 = 12
+SMR 3,0,7    ; R3 = R3 - MEM[7] = 12-5=7
+
+; === MLT / DVD / TRR ===
+AIR 0,4      ; R0 = 4
+AIR 1,2      ; R1 = 2
+MLT 0,1      ; R0 = 4*2 = 8
+DVD 0,1      ; R0 = 8/2 = 4
+TRR 0,1      ; Compare R0 and R1, set CC
+
+; === Logical instructions (R0–R3 only, skip NOT for now) ===
+AIR 2,6      ; R2 = 6
+AIR 3,3      ; R3 = 3
+AND 0,2,3    ; R0 = R2 & R3 = 2
+ORR 1,2,3    ; R1 = R2 | R3 = 7
+
+; === End program ===
+End: HLT     ; STOP

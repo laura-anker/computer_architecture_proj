@@ -1,0 +1,12 @@
+                LOC 6 ; BEGIN AT LOCATION 6
+000006  014005  AIR 0,5      ; R0 = 5
+000007  014414  AIR 1,12     ; R1 = 12
+000010  015006  AIR 2,6      ; R2 = 6 (value to shift/rotate)
+000011  172000  NOT 0,0      ; R0 = ~5 → 65530
+000012  172500  NOT 1,1      ; R1 = ~12 → 65523
+000013  063303  SRC 2,3,1,1  ; R2 << 3 logical → 48
+000014  063203  SRC 2,3,0,1  ; R2 >> 3 logical → 6
+000015  065203  RRC 2,3,0,1  ; rotate right 3 logical → 3
+000016  065303  RRC 2,3,1,1  ; rotate left 3 logical → 6
+                LOC 1024
+002000  000000  End: HLT

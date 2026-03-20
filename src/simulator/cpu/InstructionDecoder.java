@@ -83,10 +83,9 @@ public class InstructionDecoder {
                 inst.r     = (w >> 8) & 0x3;
                 inst.al    = (w >> 7) & 0x1;
                 inst.lr    = (w >> 6) & 0x1;
-                inst.count = w  & 0x3F;
+                inst.count = w & 0xF;        
 
                 break;
-
             // --------------------------------------------------
             // I/O instructions
             // Opcode | R | DeviceID

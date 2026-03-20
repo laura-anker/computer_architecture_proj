@@ -26,12 +26,12 @@ public class Simulator {
     public void start() {
         // Load the assembled load file
         ProgramLoader loader = new ProgramLoader();
-        int start = loader.load("test_load_p1.txt", memory);
+        int start = loader.load("test_load_part2_2.txt", memory);
 
         System.out.println("Start address (octal)= " + Integer.toOctalString(start));
 
         //set pc
-        cpu.getRegisters().PC.set(0050); //currently hardcoded to test p1
+        cpu.getRegisters().PC.set(start); //currently hardcoded to test p1
         
 
         //Setup index registers

@@ -11,11 +11,13 @@ public class InstructionExecutor {
     private RegisterFile regs;
     private Memory memory;
     private EffectiveAddressCalculator eaCalc;
+    private CPU cpu;
 
-    public InstructionExecutor(RegisterFile regs, Memory memory) {
+    public InstructionExecutor(RegisterFile regs, Memory memory, CPU cpu) {
         this.regs = regs;
         this.memory = memory;
         this.eaCalc = new EffectiveAddressCalculator();
+        this.cpu = cpu;
     }
 
     //todo finish adding opcode instructions for each case
@@ -136,12 +138,14 @@ public class InstructionExecutor {
 
             // I/O
 
-            case Opcode.IN://input character to register from device
-                executeIN(inst);
+            case Opcode.IN:
+                int ch = cpu.getIODevice().readChar();
+                regs.GPR[inst.r].set(ch);
                 break;
 
             case Opcode.OUT://output character to device from register
-                executeOUT(inst);
+                int out = regs.GPR[inst.r].get();  
+                cpu.getIODevice().writeChar(out);
                 break;
 
             case Opcode.CHK://check device status to register
@@ -483,24 +487,22 @@ public class InstructionExecutor {
     // I/O Instructions
 
     //input character to register from device
-    private void executeIN(Instruction inst) {
+    //private void executeIN(Instruction inst) {
 
-        System.out.print("Input number: ");
+        //System.out.print("Input number: ");
 
-        java.util.Scanner sc = new java.util.Scanner(System.in);
+        //java.util.Scanner sc = new java.util.Scanner(System.in);
 
-        int value = sc.nextInt();
+        //int value = sc.nextInt();
 
-        regs.getGPR(inst.r).set(value);
-    }
+        //regs.getGPR(inst.r).set(value);
+    //}
 
     //output character to device from register
-    private void executeOUT(Instruction inst) {
-
-        int value = regs.getGPR(inst.r).get();
-
-        System.out.println("OUTPUT: " + value);
-    }
+    ///private void executeOUT(Instruction inst) {
+        ///int value = regs.getGPR(inst.r).get();
+        //System.out.println("OUTPUT: " + value);
+   // }
 
     //check device status to register, not needed for part 2
     private void executeCHK(Instruction inst) {

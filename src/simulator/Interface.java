@@ -1,9 +1,12 @@
 package simulator;
 
 import javax.swing.*;
+
+import simulator.io.IODevice;
+
 import java.awt.*;
 
-public class Interface extends JFrame {
+public class Interface extends JFrame implements IODevice{
 
     private JTextField[] gprFields = new JTextField[4];
     private JTextField[] ixrFields = new JTextField[4];
@@ -37,6 +40,21 @@ public class Interface extends JFrame {
         add(split, BorderLayout.CENTER);
 
         add(createBottomPanel(), BorderLayout.SOUTH);
+    }
+
+    @Override
+    public int readChar() {
+        String text = consoleInputField.getText();
+        if (text.isEmpty()) return 0;
+
+        char c = text.charAt(0);
+        consoleInputField.setText(text.substring(1));
+        return (int)c;
+    }
+
+    @Override
+    public void writeChar(int c) {
+        printerArea.append(Character.toString((char)c));
     }
 
     private JPanel createLeftAndCenterPanel() {

@@ -62,38 +62,38 @@ DIGBUF5:    DATA 0
         LOC     40
 
 START:
-        ; R0 = COUNT, R1 = pointer to next array slot
-        LDR     0,0,COUNT
+        ; R2 = COUNT, R1 = pointer to next array slot
+        LDR     2,0,COUNT
         LDX     1,ARRPTR
 
 ; Read 20 integers into array (assembled from digit characters)
 READ20_LOOP:
-        JSR     3,READINT    ; returns integer in R0
-        STR     0,1,0        ; store into *ARRPTR
+        JSR     3,READINT      ; returns integer in R0
+        STR     0,1,0          ; store into *ARRPTR
 
-        LDA     2,1,0
-        AIR     2,1
-        STX     2,ARRPTR
+        LDA     3,1,0          ; bump ARRPTR via R3 (scratch)
+        AIR     3,1
+        STX     3,ARRPTR
         LDX     1,ARRPTR
 
-        SOB     0,0,READ20_LOOP
+        SOB     2,0,READ20_LOOP
 
 ; Print the 20 integers (one per line)
-        LDR     0,0,COUNT
-        LDA     2,0,ARR0
-        STX     2,ARRPTR
+        LDR     2,0,COUNT
+        LDA     3,0,ARR0
+        STX     3,ARRPTR
         LDX     1,ARRPTR
 
 PRINT20_LOOP:
         LDR     0,1,0
         JSR     3,PRINTINT
 
-        LDA     2,1,0
-        AIR     2,1
-        STX     2,ARRPTR
+        LDA     3,1,0
+        AIR     3,1
+        STX     3,ARRPTR
         LDX     1,ARRPTR
 
-        SOB     0,0,PRINT20_LOOP
+        SOB     2,0,PRINT20_LOOP
 
 ; Read user search value
         JSR     3,READINT
@@ -115,9 +115,10 @@ FIND_LOOP:
         JSR     3,ABS         ; R0 = abs difference
         STR     0,0,VALUE
 
-        LDR     2,0,BESTDIFF
-        SMR     2,0,VALUE
-        JGE     2,0,NO_UPDATE ; if BESTDIFF <= VALUE skip
+        LDR     2,0,VALUE
+        SMR     2,0,BESTDIFF   ; R2 = VALUE - BESTDIFF
+        JGE     2,0,NO_UPDATE  ; if VALUE >= BESTDIFF, skip
+        ; else VALUE < BESTDIFF → update
 
         LDR     0,0,VALUE
         STR     0,0,BESTDIFF
@@ -159,14 +160,12 @@ ABS:
         JGE     0,0,ABS_RET
         LDR     1,0,NEGONE
         MLT     0,1
-        LDR     0,0,VALUE
 ABS_RET:
         RFS     0
 
 MULT10:
         LDR     1,0,TEN
         MLT     0,1
-        LDR     0,0,VALUE
         RFS     0
 
 PRINTNEWLINE:
@@ -231,7 +230,6 @@ READINT_DONE:
         LDR     0,0,VALUE
         LDR     1,0,SIGN
         MLT     0,1
-        LDR     0,0,VALUE
 
         LDR     3,0,TEMP
         RFS     0
@@ -248,7 +246,6 @@ PRINTINT:
 
         LDR     1,0,NEGONE
         MLT     0,1
-        LDR     0,0,VALUE
 
 PI_POS:
         ; if R0 == 0, print '0'
@@ -335,7 +332,11 @@ PRINT5: LDR 1,0,DIGBUF5
 
 DO_PRINT:
         OUT     1,0
-        JGE     1,0,PI_PRINT_LOOP
+
+        ; if TEMP != 0, keep printing; else we’re done
+        LDR     1,0,TEMP
+        JNE     1,0,PI_PRINT_LOOP
+        JMA     PI_DONE
 
 PI_DONE:
         LDR     1,0,ASCII_NL

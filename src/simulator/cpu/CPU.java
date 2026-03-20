@@ -3,6 +3,7 @@ package simulator.cpu;
 import simulator.memory.Memory;
 import simulator.registers.RegisterFile;
 import simulator.instruction.Instruction;
+import simulator.io.IODevice;
 //for execution (fetch decode execute)
 public class CPU {
 
@@ -12,13 +13,25 @@ public class CPU {
     private InstructionDecoder decoder; //coverts binary to instruction
     private InstructionExecutor executor; //interacts with registers and memory to complete instruction
 
+    private IODevice io;   // for in and out instructions
+
+
     public CPU(Memory memory) {
         this.memory = memory;
         this.registers = new RegisterFile();
 
         decoder = new InstructionDecoder();
-        executor = new InstructionExecutor(registers, memory);
+        executor = new InstructionExecutor(registers, memory, this);
     }
+
+    public void setIODevice(IODevice io) {
+        this.io = io;
+    }
+
+    public IODevice getIODevice() {
+        return io;
+    }
+
 
     public RegisterFile getRegisters() {
         return registers;

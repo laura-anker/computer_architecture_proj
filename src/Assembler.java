@@ -190,11 +190,12 @@ public class Assembler {
                 // handle label field if present
                 if (splitData[index].endsWith(":")) {
                     index++; // skip label
+                    if (index >= splitData.length) {
+                    continue; // line only had label
+                    }
                 }
 
-                if (index >= splitData.length) {
-                    continue; // line only had label
-                }
+                
 
                 String opcodeStr = splitData[index].toUpperCase(); // get opcode
                 index++;

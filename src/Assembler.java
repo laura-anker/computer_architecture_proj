@@ -29,68 +29,68 @@ public class Assembler {
 
     //start pass 1
     public boolean pass1(File sourceFile){
-        //set code location to 0
         int codeLocation = 0;
-        //Read a line of the file
+        final int MAX_JT_ADDRESS = 31;   // 5-bit max
+        int jumpTableLocation = 0;       // start of low memory for jump table
+
         System.out.println("Reading from: " + sourceFile.getAbsolutePath());
-        
-        try (Scanner myReader = new Scanner(sourceFile)) { 
+
+        try (Scanner myReader = new Scanner(sourceFile)) {
             while (myReader.hasNextLine()) {
                 String data = myReader.nextLine();
-                //System.out.println("LINE: [" + data + "]");
-                if (data.isEmpty() || data.startsWith(";")){//if line is empty or comment, move to next line
-                    continue;
-                }
-                //Use the split command to break the line into parts
+                if (data.isEmpty() || data.startsWith(";")) continue;
+
                 String[] splitData = data.trim().split("\\s+");
-                int index = 0;//this is to track which field we are working in
-                //handle the label
-                if (splitData[index].endsWith(":")){//indicates label, used to define location
-                    String label = splitData[index].substring(0, splitData[index].length() - 1);//get label without :
-                    if (dictionary.containsKey(label)){//error if label is duplicated
-                        System.out.println("Duplicate label: "+label);
+                int index = 0;
+
+                // Handle label
+                if (splitData[index].endsWith(":")) {
+                    String label = splitData[index].substring(0, splitData[index].length() - 1);
+                    if (dictionary.containsKey(label)) {
+                        System.out.println("Duplicate label: " + label);
                         return false;
                     }
-                    dictionary.put(label, codeLocation);//add label, location pair to dictionary
-                    index++;
-                    //label only line then continue
-                    if (index >= splitData.length){
-                        continue;
+
+                    // If jump table label, assign low address automatically
+                    if (label.startsWith("JT_")) {
+                        System.out.println("Assigning jump table label: " + label + " to address " + jumpTableLocation);
+                        if (jumpTableLocation > MAX_JT_ADDRESS) {
+                            System.out.println("Jump table too large: " + label);
+                            return false;
+                        }
+                        dictionary.put(label, jumpTableLocation);
+                        jumpTableLocation++;
+                    } else {
+                        // normal code/data
+                        if (codeLocation <= MAX_JT_ADDRESS) codeLocation = MAX_JT_ADDRESS + 1;
+                        dictionary.put(label, codeLocation);
                     }
+
+                    index++;
+                    if (index >= splitData.length) continue;
                 }
 
-                //get opcode or directive
                 String opcode = splitData[index].toUpperCase();
 
-                //LOC, we need to set the counter without generating memory
-                if (opcode.equals("LOC")){
-                    if (index + 1 >= splitData.length){
+                if (opcode.equals("LOC")) {
+                    if (index + 1 >= splitData.length) {
                         System.out.println("Missing operand for LOC");
                         return false;
                     }
-                    try {
-                        codeLocation = Integer.parseInt(splitData[index + 1]);
-                    } catch (NumberFormatException e) {
-                        System.out.println("Invalid LOC value: " + splitData[index + 1]);
-                        return false;
-                    }
-                    continue; //we do not increment on LOC
-                }
-
-                //Data 
-                if (opcode.equals("DATA")){
-                    codeLocation += 1; //allocates one word and update location
+                    codeLocation = Integer.parseInt(splitData[index + 1]);
                     continue;
                 }
-                //otherwise assume instruction generates code
+
+                if (opcode.equals("DATA")) {
+                    codeLocation += 1;
+                    continue;
+                }
+
+                // default instruction increments
                 codeLocation += 1;
             }
 
-        } catch (FileNotFoundException e) {
-            System.out.println("An error occurred.");
-            e.printStackTrace();
-            return false;
-        }catch (Exception e) {
+        } catch (Exception e) {
             System.out.println("Unexpected error in pass1:");
             e.printStackTrace();
             return false;
@@ -165,8 +165,8 @@ public class Assembler {
 
         //Read a line of the file
         try (Scanner myreader = new Scanner(sourceFile);//this try automatically closes these when done even if error happens
-            PrintWriter listingFile = new PrintWriter("test_listing_p1.txt");
-            PrintWriter loadFile = new PrintWriter("test_load_p1.txt")) {
+            PrintWriter listingFile = new PrintWriter("test_listing_p1_v2.txt");
+            PrintWriter loadFile = new PrintWriter("test_load_p1_v2.txt")) {
             // read the file line by line
             while (myreader.hasNextLine()) {
                 String originalLine = myreader.nextLine();
@@ -314,6 +314,14 @@ public class Assembler {
                     }
                 }
                 
+                // after computing address for memory-reference instructions
+                if ((opcodeStr.equals("JSR") || opcodeStr.equals("JMA") || opcodeStr.equals("JGE") ||
+                    opcodeStr.equals("JZ") || opcodeStr.equals("JNE") || opcodeStr.equals("JCC")) 
+                    && address > 31) {
+                    System.out.println(originalLine);
+                    System.out.println("Error: Jump table address too high (5-bit max): " + address);
+                    return false;
+                }
 
                 //build our 16-bit instruction
                 //int instruction = (opcode << 10) | (r << 8) | (ix << 6) | (i << 5) | (address & 0x1F);
@@ -343,10 +351,10 @@ public class Assembler {
                     instruction = (opcode << 10) | (r   << 8) | (address & 0x1F);
                 }
                 else if (opcodeStr.equals("LDX") || opcodeStr.equals("STX")) {
-                    instruction = (opcode << 10) | (ix  << 6) | (i   << 5) | (address & 0x3FF);
+                    instruction = (opcode << 10) | (ix  << 6) | (i   << 5) | (address & 0x1F);
                 }
                 else {
-                    instruction = (opcode << 10) | (r << 8) | (ix << 6) | (i << 5) | (address & 0x3FF);
+                    instruction = (opcode << 10) | (r << 8) | (ix << 6) | (i << 5) | (address & 0x1F);
                 }
 
                 // write listing file in octal

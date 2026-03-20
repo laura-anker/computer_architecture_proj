@@ -1,4 +1,40 @@
-        LOC     6
+; =========================
+; JUMP TABLE (LOW MEMORY)
+; =========================
+JT_READ20:     DATA READ20_LOOP
+JT_PRINT20:    DATA PRINT20_LOOP
+JT_FIND:       DATA FIND_LOOP
+JT_READINT:    DATA READINT
+JT_PRINTINT:   DATA PRINTINT
+JT_ABS:        DATA ABS
+JT_MULT10:     DATA MULT10
+JT_READCHAR:   DATA READCHAR
+JT_NO_UPDATE:  DATA NO_UPDATE
+JT_READINT_LOOP:    DATA READINT_LOOP
+JT_READINT_DONE:    DATA READINT_DONE
+JT_SET_NEG:         DATA SET_NEG
+JT_CHECK_DIGIT:     DATA CHECK_DIGIT
+JT_PI_DIV_LOOP:     DATA PI_DIV_LOOP
+JT_PI_POS:          DATA PI_POS
+JT_PI_CONVERT:      DATA PI_CONVERT
+JT_PI_DONE:         DATA PI_DONE
+JT_PI_PRINT_LOOP:   DATA PI_PRINT_LOOP
+JT_ABS_RET:         DATA ABS_RET
+JT_DO_PRINT:        DATA DO_PRINT
+JT_AFTER_STORE:     DATA AFTER_STORE
+JT_STORE0:          DATA STORE0
+JT_STORE1:          DATA STORE1
+JT_STORE2:          DATA STORE2
+JT_STORE3:          DATA STORE3
+JT_STORE4:          DATA STORE4
+JT_STORE5:          DATA STORE5
+JT_PRINT0:          DATA PRINT0
+JT_PRINT1:          DATA PRINT1
+JT_PRINT2:          DATA PRINT2
+JT_PRINT3:          DATA PRINT3
+JT_PRINT4:          DATA PRINT4
+;JT_PRINT5:          DATA PRINT5
+
 
 ; ============================================================
 ; Program 1 — Read 20 signed integers, print them, read a user
@@ -68,7 +104,7 @@ START:
 
 ; Read 20 integers into array (assembled from digit characters)
 READ20_LOOP:
-        JSR     3,READINT      ; returns integer in R0
+        JSR     3,JT_READINT,1      ; returns integer in R0
         STR     0,1,0          ; store into *ARRPTR
 
         LDA     3,1,0          ; bump ARRPTR via R3 (scratch)
@@ -76,7 +112,7 @@ READ20_LOOP:
         STX     3,ARRPTR
         LDX     1,ARRPTR
 
-        SOB     2,0,READ20_LOOP
+        SOB     2,0,JT_READ20,1
 
 ; Print the 20 integers (one per line)
         LDR     2,0,COUNT
@@ -86,17 +122,17 @@ READ20_LOOP:
 
 PRINT20_LOOP:
         LDR     0,1,0
-        JSR     3,PRINTINT
+        JSR     3,JT_PRINTINT,1
 
         LDA     3,1,0
         AIR     3,1
         STX     3,ARRPTR
         LDX     1,ARRPTR
 
-        SOB     2,0,PRINT20_LOOP
+        SOB     2,0,JT_PRINT20,1
 
 ; Read user search value
-        JSR     3,READINT
+        JSR     3,JT_READINT,1
         STR     0,0,USERVAL
 
 ; Find closest — iterate array, compute abs(user - element)
@@ -112,12 +148,12 @@ FIND_LOOP:
         LDR     0,0,USERVAL
         SMR     0,1,0         ; R0 = user - current
 
-        JSR     3,ABS         ; R0 = abs difference
+        JSR     3,JT_ABS,1        ; R0 = abs difference
         STR     0,0,VALUE
 
         LDR     2,0,VALUE
         SMR     2,0,BESTDIFF   ; R2 = VALUE - BESTDIFF
-        JGE     2,0,NO_UPDATE  ; if VALUE >= BESTDIFF, skip
+        JGE     2,0,JT_NO_UPDATE,1  ; if VALUE >= BESTDIFF, skip
         ; else VALUE < BESTDIFF → update
 
         LDR     0,0,VALUE
@@ -136,14 +172,14 @@ NO_UPDATE:
         SIR     0,1
         STR     0,0,TEMP
 
-        JGE     0,0,FIND_LOOP
+        JGE     0,0,JT_FIND,1
 
 ; Print user value and closest value
         LDR     0,0,USERVAL
-        JSR     3,PRINTINT
+        JSR     3,JT_PRINTINT,1
 
         LDR     0,0,BESTVAL
-        JSR     3,PRINTINT
+        JSR     3,JT_PRINTINT,1
 
         HLT
 
@@ -157,7 +193,7 @@ READCHAR:
 
 ABS:
         ; absolute value of R0
-        JGE     0,0,ABS_RET
+        JGE     0,0,JT_ABS_RET
         LDR     1,0,NEGONE
         MLT     0,1
 ABS_RET:
@@ -186,45 +222,45 @@ READINT:
         STR     0,0,SIGN
 
 READINT_LOOP:
-        JSR     3,READCHAR
+        JSR     3,JT_READCHAR,1
         STR     1,0,CHAR
 
         LDR     2,0,CHAR
         SMR     2,0,ASCII_NL
-        JZ      2,0,READINT_DONE
+        JZ      2,0,JT_READINT_DONE,1
 
         LDR     2,0,CHAR
         SMR     2,0,ASCII_MINUS
-        JZ      2,0,SET_NEG
+        JZ      2,0,JT_SET_NEG,1
 
         LDR     2,0,CHAR
         SMR     2,0,ASCII_ZERO
-        JGE     2,0,CHECK_DIGIT
-        JMA     READINT_LOOP
+        JGE     2,0,JT_CHECK_DIGIT,1
+        JMA     JT_READINT_LOOP,1
 
 CHECK_DIGIT:
         LDR     2,0,CHAR
         SMR     2,0,ASCII_NINE
-        JGE     2,0,READINT_LOOP
+        JGE     2,0,JT_READINT_LOOP,1
 
         LDR     0,0,CHAR
         SMR     0,0,ASCII_ZERO
         STR     0,0,DIGIT
 
         LDR     0,0,VALUE
-        JSR     3,MULT10
+        JSR     3,JT_MULT10,1
         STR     0,0,VALUE
 
         LDR     0,0,VALUE
         AMR     0,0,DIGIT
         STR     0,0,VALUE
 
-        JMA     READINT_LOOP
+        JMA     JT_READINT_LOOP,1
 
 SET_NEG:
         LDR     0,0,NEGONE
         STR     0,0,SIGN
-        JMA     READINT_LOOP
+        JMA     JT_READINT_LOOP,1
 
 READINT_DONE:
         LDR     0,0,VALUE
@@ -239,7 +275,7 @@ PRINTINT:
         STR     3,0,TEMP        ; save return address
 
         ; handle negative
-        JGE     0,0,PI_POS
+        JGE     0,0,JT_PI_POS,1
 
         LDR     1,0,ASCII_MINUS
         OUT     1,0
@@ -249,10 +285,10 @@ PRINTINT:
 
 PI_POS:
         ; if R0 == 0, print '0'
-        JNE     0,0,PI_CONVERT
+        JNE     0,0,JT_PI_CONVERT,1
         LDR     1,0,ASCII_ZERO
         OUT     1,0
-        JMA     PI_DONE
+        JMA     JT_PI_DONE,1
 
 PI_CONVERT:
         LDA     1,0,0
@@ -269,27 +305,27 @@ PI_DIV_LOOP:
 
         ; store into DIGBUF[TEMP]
         LDR     2,0,TEMP
-        JZ      2,0,STORE0
+        JZ      2,0,JT_STORE0
         SIR     2,1
-        JZ      2,0,STORE1
+        JZ      2,0,JT_STORE1
         SIR     2,1
-        JZ      2,0,STORE2
+        JZ      2,0,JT_STORE2
         SIR     2,1
-        JZ      2,0,STORE3
+        JZ      2,0,JT_STORE3
         SIR     2,1
-        JZ      2,0,STORE4
-        JMA     STORE5
+        JZ      2,0,JT_STORE4
+        JMA     JT_STORE5
 
 STORE0: STR 1,0,DIGBUF0
-        JMA AFTER_STORE
+        JMA JT_AFTER_STORE
 STORE1: STR 1,0,DIGBUF1
-        JMA AFTER_STORE
+        JMA JT_AFTER_STORE
 STORE2: STR 1,0,DIGBUF2
-        JMA AFTER_STORE
+        JMA JT_AFTER_STORE
 STORE3: STR 1,0,DIGBUF3
-        JMA AFTER_STORE
+        JMA JT_AFTER_STORE
 STORE4: STR 1,0,DIGBUF4
-        JMA AFTER_STORE
+        JMA JT_AFTER_STORE
 STORE5: STR 1,0,DIGBUF5
 
 AFTER_STORE:
@@ -299,7 +335,7 @@ AFTER_STORE:
         STR     1,0,TEMP
 
         ; continue if quotient > 0
-        JNE     0,0,PI_DIV_LOOP
+        JNE     0,0,JT_PI_DIV_LOOP,1
 
 PI_PRINT_LOOP:
         LDR     1,0,TEMP
@@ -307,27 +343,27 @@ PI_PRINT_LOOP:
         STR     1,0,TEMP
 
         LDR     2,0,TEMP
-        JZ      2,0,PRINT0
+        JZ      2,0,JT_PRINT0
         SIR     2,1
-        JZ      2,0,PRINT1
+        JZ      2,0,JT_PRINT1
         SIR     2,1
-        JZ      2,0,PRINT2
+        JZ      2,0,JT_PRINT2
         SIR     2,1
-        JZ      2,0,PRINT3
+        JZ      2,0,JT_PRINT3
         SIR     2,1
-        JZ      2,0,PRINT4
+        JZ      2,0,JT_PRINT4
         JMA     PRINT5
 
 PRINT0: LDR 1,0,DIGBUF0
-        JMA DO_PRINT
+        JMA JT_DO_PRINT
 PRINT1: LDR 1,0,DIGBUF1
-        JMA DO_PRINT
+        JMA JT_DO_PRINT
 PRINT2: LDR 1,0,DIGBUF2
-        JMA DO_PRINT
+        JMA JT_DO_PRINT
 PRINT3: LDR 1,0,DIGBUF3
-        JMA DO_PRINT
+        JMA JT_DO_PRINT
 PRINT4: LDR 1,0,DIGBUF4
-        JMA DO_PRINT
+        JMA JT_DO_PRINT
 PRINT5: LDR 1,0,DIGBUF5
 
 DO_PRINT:
@@ -335,8 +371,8 @@ DO_PRINT:
 
         ; if TEMP != 0, keep printing; else we’re done
         LDR     1,0,TEMP
-        JNE     1,0,PI_PRINT_LOOP
-        JMA     PI_DONE
+        JNE     1,0,JT_PI_PRINT_LOOP,1
+        JMA     JT_PI_DONE,1
 
 PI_DONE:
         LDR     1,0,ASCII_NL

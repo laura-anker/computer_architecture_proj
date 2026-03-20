@@ -26,7 +26,7 @@ public class Simulator {
     public void start() {
         // Load the assembled load file
         ProgramLoader loader = new ProgramLoader();
-        int start = loader.load("test_load_p1.txt", memory);
+        int start = loader.load("test_load_p1_v2.txt", memory);
 
         System.out.println("Start address (octal)= " + Integer.toOctalString(start));
 

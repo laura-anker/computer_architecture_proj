@@ -7,17 +7,21 @@ import simulator.instruction.Instruction;
 public class EffectiveAddressCalculator {
 
     public int computeEA(Instruction inst,
-                         RegisterFile regs,
-                         Memory memory) {
+                     RegisterFile regs,
+                     Memory memory) {
 
-        int ea = inst.address; //base address
+        int ea = inst.address; // base address
 
-        if (inst.ix != 0)       //if index add its value to the base
+        // indexing
+        if (inst.ix != 0) {
             ea += regs.getIX(inst.ix).get();
+        }
 
-        if (inst.i == 1)        //checking the indirect bit, not an address but the contents of memory
-            ea = memory.read(ea);
+        // indirect
+        if (inst.i == 1) {
+            ea = memory.read(ea) & 0xFFFF;  // ✅ FIX
+        }
 
-        return ea; //final memory address that cpu uses for read/write
+        return ea & 0x3FF;  // ✅ also good practice
     }
 }

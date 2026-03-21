@@ -1,0 +1,362 @@
+        LOC     0
+
+; ============================================================
+; Low memory: jump table + base constants + startup
+; ============================================================
+
+PTR_READ20:     DATA    READ20
+PTR_PRINT20:    DATA    PRINT20
+PTR_READUSER:   DATA    READUSER
+PTR_FINDCLOSE:  DATA    FINDCLOSE
+PTR_PRINTVALS:  DATA    PRINTVALS
+
+; base addresses (must match data LOCs below)
+BASE_ARR:       DATA    64      ; base for ARR0..ARR19
+BASE_VAR:       DATA    96      ; base for scalar vars
+BASE_BUF:       DATA    128     ; base for DIGBUF*
+
+; ------------------------------------------------------------
+; START: initialize index registers as base pointers
+; ------------------------------------------------------------
+START:
+        ; IX1 = BASE_ARR
+        LDX     1,0,BASE_ARR
+        ; IX2 = BASE_VAR
+        LDX     2,0,BASE_VAR
+        ; IX3 = BASE_BUF
+        LDX     3,0,BASE_BUF
+
+        ; jump to READ20 via jump table
+        LDA     0,0,PTR_READ20,1
+        JMA     0,0,0,1
+
+; ============================================================
+; High memory: arrays
+; ============================================================
+        LOC     64          ; BASE_ARR
+
+ARR0:       DATA    0
+ARR1:       DATA    0
+ARR2:       DATA    0
+ARR3:       DATA    0
+ARR4:       DATA    0
+ARR5:       DATA    0
+ARR6:       DATA    0
+ARR7:       DATA    0
+ARR8:       DATA    0
+ARR9:       DATA    0
+ARR10:      DATA    0
+ARR11:      DATA    0
+ARR12:      DATA    0
+ARR13:      DATA    0
+ARR14:      DATA    0
+ARR15:      DATA    0
+ARR16:      DATA    0
+ARR17:      DATA    0
+ARR18:      DATA    0
+ARR19:      DATA    0
+
+; ============================================================
+; High memory: scalar variables
+; ============================================================
+        LOC     96          ; BASE_VAR
+
+COUNT:      DATA    20
+USERVAL:    DATA    0
+BESTVAL:    DATA    0
+BESTDIFF:   DATA    32767
+TEMP:       DATA    0
+SIGN:       DATA    0
+CHAR:       DATA    0
+VALUE:      DATA    0
+DIGIT:      DATA    0
+TEN:        DATA    10
+NEGONE:     DATA    -1
+
+ASCII_ZERO: DATA    48
+ASCII_NINE: DATA    57
+ASCII_MINUS: DATA    45
+ASCII_NL:   DATA    10
+
+; ============================================================
+; High memory: digit buffer
+; ============================================================
+        LOC     128         ; BASE_BUF
+
+DIGBUF0:    DATA    0
+DIGBUF1:    DATA    0
+DIGBUF2:    DATA    0
+DIGBUF3:    DATA    0
+DIGBUF4:    DATA    0
+DIGBUF5:    DATA    0
+
+; ============================================================
+; Code section (can be anywhere; jumps use IX if needed)
+; ============================================================
+        LOC     160
+
+; ------------------------------------------------------------
+; READ20: read 20 integers into ARR0..ARR19
+; ------------------------------------------------------------
+READ20:
+        ; R2 = COUNT (MEM[IX2+0])
+        LDR     2,2,0
+        ; R1 = address of ARR0 (IX1 + 0)
+        LDA     1,1,0
+
+READ20_LOOP:
+        JSR     3,0,READINT
+        STR     0,1,0        ; MEM[IX1 + offset] = R0
+        AIR     1,1          ; R1++
+        SIR     2,1          ; COUNT--
+        JGE     2,0,READ20_LOOP
+
+        LDA     0,0,PTR_PRINT20,1
+        JMA     0,0,0,1
+
+; ------------------------------------------------------------
+; PRINT20: print 20 integers from ARR0..ARR19
+; ------------------------------------------------------------
+PRINT20:
+        LDR     2,2,0        ; COUNT
+        LDA     1,1,0        ; R1 = &ARR0
+
+PRINT20_LOOP:
+        LDR     0,1,0
+        JSR     3,0,PRINTINT
+        AIR     1,1
+        SIR     2,1
+        JGE     2,0,PRINT20_LOOP
+
+        LDA     0,0,PTR_READUSER,1
+        JMA     0,0,0,1
+
+; ------------------------------------------------------------
+; READUSER: read single integer into USERVAL
+; ------------------------------------------------------------
+READUSER:
+        JSR     3,0,READINT
+        STR     0,2,1        ; USERVAL at IX2+1
+
+        LDA     0,0,PTR_FINDCLOSE,1
+        JMA     0,0,0,1
+
+; ------------------------------------------------------------
+; FINDCLOSE: find array element closest to USERVAL
+; ------------------------------------------------------------
+FINDCLOSE:
+        LDR     0,2,0        ; COUNT
+        STR     0,2,4        ; TEMP at IX2+4
+        LDA     1,1,0        ; R1 = &ARR0
+
+FIND_LOOP:
+        LDR     1,1,0        ; current array element
+        LDR     0,2,1        ; USERVAL
+        SMR     0,1,0        ; R0 = USERVAL - elem
+        JSR     3,0,ABS
+        STR     0,2,7        ; VALUE at IX2+7
+
+        LDR     2,2,7        ; VALUE
+        LDR     3,2,3        ; BESTDIFF at IX2+3
+        SMR     2,3,0        ; R2 = VALUE - BESTDIFF
+        JGE     2,0,SKIP_UPDATE
+
+        LDR     0,2,7        ; VALUE
+        STR     0,2,3        ; BESTDIFF
+        LDR     0,1,0        ; array element
+        STR     0,2,2        ; BESTVAL at IX2+2
+
+SKIP_UPDATE:
+        AIR     1,1          ; next array element
+        LDR     0,2,4        ; TEMP
+        SIR     0,1
+        STR     0,2,4
+        JGE     0,0,FIND_LOOP
+
+        LDA     0,0,PTR_PRINTVALS,1
+        JMA     0,0,0,1
+
+; ------------------------------------------------------------
+; PRINTVALS: print USERVAL and BESTVAL
+; ------------------------------------------------------------
+PRINTVALS:
+        LDR     0,2,1        ; USERVAL
+        JSR     3,0,PRINTINT
+        LDR     0,2,2        ; BESTVAL
+        JSR     3,0,PRINTINT
+        HLT
+
+; ------------------------------------------------------------
+; READCHAR: read one char into R1
+; ------------------------------------------------------------
+READCHAR:
+        IN      1,0
+        RFS     0
+
+; ------------------------------------------------------------
+; ABS: R0 = |R0|
+; ------------------------------------------------------------
+ABS:
+        JGE     0,0,ABS_RET
+        LDR     1,2,10       ; NEGONE at IX2+10
+        MLT     0,1
+ABS_RET:
+        RFS     0
+
+; ------------------------------------------------------------
+; MULT10: R0 *= 10
+; ------------------------------------------------------------
+MULT10:
+        LDR     1,2,9        ; TEN at IX2+9
+        MLT     0,1
+        RFS     0
+
+; ------------------------------------------------------------
+; PRINTNEWLINE
+; ------------------------------------------------------------
+PRINTNEWLINE:
+        LDR     1,2,13       ; ASCII_NL at IX2+13
+        OUT     1,0
+        RFS     0
+
+; ------------------------------------------------------------
+; READINT: read signed integer into R0
+; ------------------------------------------------------------
+READINT:
+        STR     3,2,4        ; save R3 into TEMP (IX2+4)
+        LDA     0,0,0
+        STR     0,2,6        ; VALUE at IX2+6
+        LDA     0,0,0
+        AIR     0,1
+        STR     0,2,5        ; SIGN = +1 at IX2+5
+
+READINT_LOOP:
+        JSR     3,0,READCHAR
+        STR     1,2,6        ; CHAR at IX2+6 (reuse slot)
+
+        ; newline?
+        LDR     2,2,6        ; CHAR
+        LDR     3,2,13       ; ASCII_NL
+        SMR     2,3,0
+        JGE     2,0,READINT_DONE
+
+        ; minus?
+        LDR     2,2,6
+        LDR     3,2,12       ; ASCII_MINUS
+        SMR     2,3,0
+        JNE     2,0,CHECK_DIGIT
+        LDR     0,2,10       ; NEGONE
+        STR     0,2,5        ; SIGN
+        JMA     0,0,READINT_LOOP
+
+CHECK_DIGIT:
+        ; CHAR >= '0' ?
+        LDR     2,2,6        ; CHAR
+        LDR     3,2,11       ; ASCII_ZERO
+        SMR     2,3,0
+        JGE     2,0,CHECK_DIGIT_UPPER
+        JMA     0,0,READINT_LOOP
+
+CHECK_DIGIT_UPPER:
+        ; CHAR <= '9' ?
+        LDR     2,2,8        ; ASCII_NINE
+        LDR     3,2,6        ; CHAR
+        SMR     2,3,0
+        JGE     2,0,DIGIT_OK
+        JMA     0,0,READINT_LOOP
+
+DIGIT_OK:
+        LDR     0,2,6        ; VALUE
+        JSR     3,0,MULT10
+        STR     0,2,6        ; VALUE
+
+        LDR     0,2,6        ; CHAR
+        LDR     1,2,11       ; ASCII_ZERO
+        SMR     0,1,0
+        AMR     0,2,6        ; VALUE += digit
+        STR     0,2,6
+        JMA     0,0,READINT_LOOP
+
+READINT_DONE:
+        LDR     0,2,6        ; VALUE
+        LDR     1,2,5        ; SIGN
+        MLT     0,1
+        LDR     3,2,4        ; restore R3
+        RFS     0
+
+; ------------------------------------------------------------
+; PRINTINT: print signed integer in R0
+; ------------------------------------------------------------
+PRINTINT:
+        STR     3,2,4        ; save R3 in TEMP
+
+        ; sign?
+        JGE     0,0,PI_POS
+        LDR     1,2,12       ; ASCII_MINUS
+        OUT     1,0
+        LDR     1,2,10       ; NEGONE
+        MLT     0,1
+
+PI_POS:
+        JNE     0,0,PI_CONVERT
+        LDR     1,2,11       ; ASCII_ZERO
+        OUT     1,0
+        JMA     0,0,PI_DONE
+
+; ------------------------------------------------------------
+; PI_CONVERT: convert R0 to decimal using DIGBUF*
+; ------------------------------------------------------------
+PI_CONVERT:
+        LDA     1,3,0        ; R1 = &DIGBUF0 (IX3+0)
+        LDA     2,0,0
+        STR     2,2,5        ; use SIGN as digit count = 0
+
+PI_DIV_LOOP:
+        JZ      0,0,PI_STORE_DONE
+
+        ; quotient = 0 (VALUE)
+        LDA     2,0,0
+        STR     2,2,6        ; VALUE
+
+PI_SUB_LOOP:
+        LDR     2,2,9        ; TEN
+        SMR     0,2,0
+        JGE     0,0,PI_SUB_OK
+        AMR     0,2,9        ; undo last subtract
+        JMA     0,0,PI_SUB_DONE
+
+PI_SUB_OK:
+        LDR     2,2,6        ; VALUE
+        AIR     2,1
+        STR     2,2,6
+        JMA     0,0,PI_SUB_LOOP
+
+PI_SUB_DONE:
+        STR     0,2,7        ; DIGIT
+        LDR     0,2,6        ; VALUE (quotient)
+
+        LDR     2,2,7        ; DIGIT
+        AMR     2,2,11       ; + ASCII_ZERO
+        STR     2,3,0        ; *R1
+        AIR     1,1          ; R1++
+
+        LDR     2,2,5        ; count
+        AIR     2,1
+        STR     2,2,5
+        JMA     0,0,PI_DIV_LOOP
+
+PI_STORE_DONE:
+        LDR     2,2,5        ; count
+        JZ      2,0,PI_DONE
+
+PI_PRINT_LOOP:
+        SIR     1,1
+        LDR     0,3,0
+        OUT     0,0
+        SIR     2,1
+        JZ      2,0,PI_DONE
+        JMA     0,0,PI_PRINT_LOOP
+
+PI_DONE:
+        LDR     3,2,4        ; restore R3
+        RFS     0

@@ -20,8 +20,8 @@ public class CPU {
         this.memory = memory;
         this.registers = new RegisterFile();
 
-        decoder = new InstructionDecoder();
-        executor = new InstructionExecutor(registers, memory, this);
+        this.decoder = new InstructionDecoder();
+        this.executor = new InstructionExecutor(registers, memory, this);
     }
 
     public void setIODevice(IODevice io) {
@@ -44,10 +44,9 @@ public class CPU {
         );
 
         fetch();
-
         Instruction inst = decode();
-
         boolean cont = execute(inst);
+        
         System.out.println(
             "PC AFTER EXECUTE = " +
             Integer.toOctalString(registers.PC.get())

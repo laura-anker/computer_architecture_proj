@@ -29,20 +29,38 @@ public class InstructionDecoder {
             case Opcode.JNE:
             case Opcode.JCC:
             case Opcode.JMA:
-            case Opcode.JSR:
+            //case Opcode.JSR:
             case Opcode.SOB:
             case Opcode.JGE:
-            case Opcode.LDX:
-            case Opcode.STX:
+            //case Opcode.LDX:
+            //case Opcode.STX:
             case Opcode.RFS:
 
                 inst.r       = (w >> 8) & 0x3;
                 inst.ix      = (w >> 6) & 0x3;
                 inst.i       = (w >> 5) & 0x1;
                 inst.address =  w       & 0x1F;
+                //inst.address = w & 0xFFF;   // full 12-bit address
+
 
                 break;
 
+            case Opcode.JSR:
+                inst.r       = (w >> 8) & 0x3;
+                inst.address =  w       & 0x3FF;  // 10-bit absolute address
+                inst.ix      = 0;
+                inst.i       = 0;
+                break;
+                
+            case Opcode.LDX:
+            case Opcode.STX:
+
+                inst.ix      = (w >> 6) & 0x3;
+                inst.i       = (w >> 5) & 0x1;
+                inst.address =  w       & 0x1F;
+                //inst.address = w & 0xFFF;   // full 12-bit address
+
+                break;
             // --------------------------------------------------
             // Immediate Instructions
             // Opcode | R | Immediate(5)

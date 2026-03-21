@@ -296,6 +296,7 @@ public class InstructionExecutor {
     }
 
     //jump and save return address
+    /* 
     private void executeJSR(Instruction inst) {
 
         int ea = eaCalc.computeEA(inst, regs, memory);
@@ -305,6 +306,12 @@ public class InstructionExecutor {
 
         // jump to subroutine
         regs.getPC().set(ea);
+    }
+*/
+    private void executeJSR(Instruction inst) {
+    int target = inst.address;                 // absolute 10-bit address
+    regs.getGPR(3).set(regs.getPC().get() + 1);
+    regs.getPC().set(target);
     }
 
     //return from subroutine with return code as immed portion (optional) stored in instructions's addr field

@@ -301,7 +301,7 @@ public class InstructionExecutor {
         int ea = eaCalc.computeEA(inst, regs, memory);
 
         // save return address
-        regs.getGPR(3).set(regs.getPC().get());
+        regs.getGPR(3).set(regs.getPC().get() +1);
 
         // jump to subroutine
         regs.getPC().set(ea);

@@ -165,8 +165,8 @@ public class Assembler {
 
         //Read a line of the file
         try (Scanner myreader = new Scanner(sourceFile);//this try automatically closes these when done even if error happens
-            PrintWriter listingFile = new PrintWriter("test_listing_cache.txt");
-            PrintWriter loadFile = new PrintWriter("test_load_cache.txt")) {
+            PrintWriter listingFile = new PrintWriter("test_listing_part2_4.txt");
+            PrintWriter loadFile = new PrintWriter("test_load_part2_4.txt")) {
             // read the file line by line
             while (myreader.hasNextLine()) {
                 String originalLine = myreader.nextLine();
@@ -380,7 +380,7 @@ public class Assembler {
 //end pass 2
 
     public static void main(String[] args){
-        File sourceFile = new File("test_cache.txt"); //hard coding which source file to read
+        File sourceFile = new File("test_source_part2_4.txt"); //hard coding which source file to read
         Assembler a = new Assembler();
         a.run(sourceFile);
     }

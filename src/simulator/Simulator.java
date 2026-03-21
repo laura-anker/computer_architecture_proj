@@ -26,14 +26,14 @@ public class Simulator {
     public void start() {
         // Load the assembled load file
         ProgramLoader loader = new ProgramLoader();
-        int start = loader.load("test_load_cache.txt", memory);
+        int start = loader.load("test_load_part2_4.txt", memory);
 
         System.out.println("Start address (octal)= " + Integer.toOctalString(start));
 
         //set pc
         //cpu.getRegisters().PC.set(start); //currently hardcoded to test p1
         
-        cpu.getRegisters().PC.set(0144);
+        cpu.getRegisters().PC.set(0016);
 
         //Setup index registers
         cpu.getRegisters().IX[1].set(1);  // X1 = 1 for indexed instructions

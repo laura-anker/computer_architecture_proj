@@ -1,0 +1,21 @@
+                LOC 6 ; BEGIN AT LOCATION 6
+000006  000005  Data 5       ; LOCATION 6 - counter for SOB
+000007  000000  Data 0       ; LOCATION 7 - temporary / testing
+000010  000014  Data 12      ; LOCATION 8 - test value
+000011  000017  Data 15      ; LOCATION 9 - test value
+000012  000024  Data 20      ; LOCATION 10 - test value
+000013  000000  Data 0       ; LOCATION 11 - R0 initial value
+000014  000003  Data 3       ; LOCATION 12 - R1 test value
+000015  000010  Data 8       ; LOCATION 13 - R2 test value
+                LOC 14
+000016  003015  LDR 2,0,13     ; R2 = 8 to test JGE, 14
+000017  030024  JSR 0,0,20     ; Jump to subroutine at LOC 20, 15 (R3 becomes return address)
+000020  032000  RFS 0          ; Return from subroutine, 16 
+000021  037023  JGE 2,0,19     ; Jump if R2 >= 0 to LOC 19, 17
+000022  003406  LDR 3,0,6      ; R3 = 5, 18
+000023  035026  SOB 2,0,22     ; Jump to LOC 22 and subtract 1 from R2, 19
+                LOC 20
+000024  002012  LDR 0,0,10     ; load 20 into R0, 20
+000025  032000  RFS 0          ; Return from subroutine, 21 (20 is replaces with immed address)
+                LOC 22
+000026  000000  HLT            ; Stop program, expected R0 = 0, R2=7, R3=17

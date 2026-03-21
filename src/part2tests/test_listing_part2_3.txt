@@ -1,0 +1,25 @@
+                LOC 6 ; BEGIN AT LOCATION 6
+000006  000005  Data 5       ; LOCATION 6 - counter for SOB
+000007  000000  Data 0       ; LOCATION 7 - temporary / testing
+000010  000014  Data 12      ; LOCATION 8 - test value
+000011  000017  Data 15      ; LOCATION 9 - test value
+000012  000024  Data 20      ; LOCATION 10 - test value
+000013  000000  Data 0       ; LOCATION 11 - R0 initial value
+000014  000003  Data 3       ; LOCATION 12 - R1 test value
+000015  000010  Data 8       ; LOCATION 13 - R2 test value
+                LOC 14
+000016  002013  LDR 0,0,11     ; R0 = 0 to test JZ, 14
+000017  002414  LDR 1,0,12     ; R1 = 3 to test JNE, 15
+000020  003406  LDR 3,0,6      ; R3 = 5 to test SOB, 16
+000021  020024  JZ 0,0,20      ; Jump to LOC 20 if R0 == 0, 17
+                LOC 18
+000022  164200  TRR 0,2      ; Compare R0 and R1, set CC, 18
+000023  025426  JCC 3,0,22     ; Jump to LOC 22 if CC set, 19
+                LOC 20
+000024  002013  LDR 0,0,11     ; Dummy instruction for JZ/JCC/JMA/JGE targets, 20
+000025  022422  JNE 1,0,18     ; Jump to LOC 18 if R1 != 0, 21
+                LOC 22
+000026  026030  JMA 0,0,24    ; Unconditional jump to LOC 24, 22
+000027  003015  LDR 2,0,13     ; R2 = 8 , 23
+                LOC 24
+000030  000000  HLT            ; Stop program, expected: 17->20->18->22->24, R0=0, R1=3, R2=0, R3=5

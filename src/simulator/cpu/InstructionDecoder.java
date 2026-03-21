@@ -34,6 +34,7 @@ public class InstructionDecoder {
             case Opcode.JGE:
             case Opcode.LDX:
             case Opcode.STX:
+            case Opcode.RFS:
 
                 inst.r       = (w >> 8) & 0x3;
                 inst.ix      = (w >> 6) & 0x3;

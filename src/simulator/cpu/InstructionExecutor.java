@@ -152,6 +152,10 @@ public class InstructionExecutor {
                 executeCHK(inst);
                 break;
 
+            case Opcode.TRAP://trap
+                executeTRAP(inst);
+                break;
+
             //helpful for debugging
             default:
                 System.out.println("Unknown instruction: opcode=" + inst.opcode);
@@ -515,6 +519,20 @@ public class InstructionExecutor {
     private void executeCHK(Instruction inst) {
 
         regs.getGPR(inst.r).set(1); // device ready
+    }
+
+    //traps to memory address 0
+    private void executeTRAP(Instruction inst) {
+        //table has max 16 entries representing 16 routines
+        //trap code contains index to table (0-15)
+        //goes to routine whose address is stored in memory location 0
+        //executes those instructions then returns to instruction stored in memory location 2
+        memory.write(2, (short)(regs.getPC().get() + 1));// store PC+1 in memory location 2
+        int trapCode = inst.address & 0xF; // get lower 4 bits for trap code (0-15)
+        int trapTableBase = memory.read(0); // read base address of trap table from memory location 0
+        int routineAddr = memory.read(trapTableBase + trapCode); // get routine address
+        
+        regs.getPC().set(routineAddr);
     }
 
 }

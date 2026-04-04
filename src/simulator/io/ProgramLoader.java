@@ -33,6 +33,7 @@ public class ProgramLoader {
                 if (line.startsWith("START")) {
                     String[] parts = line.split("\\s+");
                     return Integer.parseInt(parts[1], 8);   // return start address in octal
+                    continue;
                 }
 
                 //split line into address and value
@@ -66,6 +67,18 @@ public class ProgramLoader {
                     e.printStackTrace();
                 }
             }
+
+            //initialize TRAP table
+            int trapTableBase = 0100; // base address for TRAP routines, may need to be changed later?? idk if it'll conflict with loaded programs, but we can change it if it does
+
+            //store base address in memory[0]
+            memory.write(0, (short) trapTableBase);
+
+            //initialize all 16 entries to something safe
+            for (int i = 0; i < 16; i++) {
+                memory.write(trapTableBase + i, (short) 0300); // default routine
+            }
+
 
             return startAddress;
 

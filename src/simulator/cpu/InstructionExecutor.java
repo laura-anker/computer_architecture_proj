@@ -515,10 +515,10 @@ public class InstructionExecutor {
         //System.out.println("OUTPUT: " + value);
    // }
 
-    //check device status to register, not needed for part 2
+    //check device status to register
     private void executeCHK(Instruction inst) {
-
-        regs.getGPR(inst.r).set(1); // device ready
+        int status = cpu.getIODevice().getStatus();
+        regs.getGPR(inst.r).set(status);
     }
 
     //traps to memory address 0

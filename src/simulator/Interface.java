@@ -59,6 +59,17 @@ public class Interface extends JFrame implements IODevice{
         printerArea.append(Character.toString((char)c));
     }
 
+    @Override
+    public int getStatus() {
+        String text = consoleInputField.getText();
+
+        if (text.isEmpty()) {
+            return 1; // BUSY (no input available)
+        } else {
+            return 0; // READY (input available)
+        }
+    }
+
     private JPanel createLeftAndCenterPanel() {
         JPanel panel = new JPanel(new BorderLayout());
         panel.add(createLeftPanel(), BorderLayout.WEST);

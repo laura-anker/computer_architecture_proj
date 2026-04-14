@@ -77,7 +77,10 @@ public class ProgramLoader {
             for (int i = 0; i < 16; i++) {
                 memory.write(trapTableBase + i, (short) 0300); // default routine
             }
-
+            //initialize machine fault handler
+            int faultHandlerBase = 0200; // base address for fault handler
+            memory.write(1, (short) faultHandlerBase);
+            // perhaps initialize some fault handling code, but for now, just set address
 
             return startAddress;
 

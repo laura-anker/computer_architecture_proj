@@ -165,8 +165,8 @@ public class Assembler {
 
         //Read a line of the file
         try (Scanner myreader = new Scanner(sourceFile);//this try automatically closes these when done even if error happens
-            PrintWriter listingFile = new PrintWriter("test_listing_part3_trap.txt");
-            PrintWriter loadFile = new PrintWriter("test_load_part3_trap.txt")) {
+            PrintWriter listingFile = new PrintWriter("test_listing_mf.txt");
+            PrintWriter loadFile = new PrintWriter("test_load_mf.txt")) {
             // read the file line by line
             while (myreader.hasNextLine()) {
                 String originalLine = myreader.nextLine();
@@ -338,7 +338,7 @@ public class Assembler {
 
                 }
                 else if (opcodeStr.equals("TRAP")) {
-                    instruction = (opcode << 10) | (address & 0xF);
+                    instruction = (opcode << 10) | (address & 0xF); // TRAP uses only 4 bits for address (trap code)
                 }
                 else if (opcodeStr.equals("AIR") || opcodeStr.equals("SIR")) {
                     instruction = (opcode << 10) | (r   << 8) | (address & 0x1F);
@@ -384,7 +384,7 @@ public class Assembler {
 //end pass 2
 
     public static void main(String[] args){
-        File sourceFile = new File("test_source_part3_trap.txt"); //hard coding which source file to read
+        File sourceFile = new File("test_source_mf.txt"); //hard coding which source file to read
         Assembler a = new Assembler();
         a.run(sourceFile);
     }

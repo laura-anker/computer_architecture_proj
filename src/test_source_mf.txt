@@ -1,0 +1,14 @@
+LOC 0
+Data 100        ; trap table base (not used here, but safe)
+
+LOC 1
+Data 2000       ; machine fault handler starts at 2000
+
+LOC 6           ; program start
+TRAP 20         ; INVALID trap code (valid is 0–15) → should cause fault
+HLT             ; should NEVER reach here
+
+; -------- MACHINE FAULT HANDLER --------
+LOC 2000
+LDR 0,0,4       ; load MFR value into R0 (should be 2 for this fault)
+HLT             ; stop so we can inspect

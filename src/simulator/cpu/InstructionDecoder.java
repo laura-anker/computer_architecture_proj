@@ -11,6 +11,8 @@ public class InstructionDecoder {
 
         int opcode = (w >> 10) & 0x3F;
 
+        System.out.println("Decoded opcode: " + opcode);
+
         Instruction inst = new Instruction(opcode);
 
         switch (opcode) {

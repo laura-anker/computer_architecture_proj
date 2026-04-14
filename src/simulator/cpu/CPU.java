@@ -22,6 +22,11 @@ public class CPU {
 
         this.decoder = new InstructionDecoder();
         this.executor = new InstructionExecutor(registers, memory, this);
+
+        // Set RegisterFile in Memory for fault handling
+        if (memory instanceof simulator.memory.Memory) {
+            ((simulator.memory.Memory) memory).setRegisterFile(registers);
+        }
     }
 
     public void setIODevice(IODevice io) {

@@ -370,6 +370,9 @@ public class Interface extends JFrame implements IODevice{
         marField.setText(Integer.toOctalString(regs.MAR.get()));
         mbrField.setText(Integer.toOctalString(regs.MBR.get()));
         irField.setText(Integer.toOctalString(regs.IR.get()));
+
+        ccField.setText(Integer.toOctalString(regs.CC.get()));
+        mfrField.setText(Integer.toOctalString(regs.MFR.get()));
     }
 
     private void loadProgram() {

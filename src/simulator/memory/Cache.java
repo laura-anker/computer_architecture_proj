@@ -9,10 +9,19 @@ public class Cache extends Memory {
     private int fifoCounter = 0;
 
     public Cache(Memory backingMemory) {
+        super();
         this.backingMemory = backingMemory;
 
         for (int i = 0; i < CACHE_SIZE; i++) {
             lines[i] = new CacheLine();
+        }
+    }
+
+    @Override
+    public void setRegisterFile(simulator.registers.RegisterFile registers) {
+        super.setRegisterFile(registers);
+        if (backingMemory instanceof simulator.memory.Memory) {
+            ((simulator.memory.Memory) backingMemory).setRegisterFile(registers);
         }
     }
 

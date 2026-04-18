@@ -26,12 +26,12 @@ public class Simulator {
     public void start() {
         // Load the assembled load file
         ProgramLoader loader = new ProgramLoader();
-        int start = loader.load("test_load_mf.txt", memory);
+        int start = loader.load("output-load.txt", memory);
 
         System.out.println("Start address (octal)= " + Integer.toOctalString(start));
 
         //set pc
-        cpu.getRegisters().PC.set(000006); //currently hardcoded to test p1
+        cpu.getRegisters().PC.set(start); //currently hardcoded to test p1
         
         //cpu.getRegisters().PC.set(0010);
 

@@ -26,17 +26,17 @@ public class Cache extends Memory {
     }
 
     @Override
-    public short read(int address) {
+    public int read(int address) {
         // search cache
         for (CacheLine line : lines) {
             if (line.valid && line.tag == address) {
                 //System.out.println("CACHE READ " + address + " → HIT");
-                return line.data; // HIT
+                return line.data & 0xFFFF; // HIT
             }
         }
 
         // MISS → fetch from mem
-        short value = backingMemory.read(address);
+        int value = backingMemory.read(address);
 
         insert(address, value);
         //System.out.println("CACHE READ " + address + " → MISS");
@@ -44,20 +44,20 @@ public class Cache extends Memory {
     }
 
     @Override
-    public void write(int address, short value) {
+    public void write(int address, int value) {
         // write-through to memory
         backingMemory.write(address, value);
 
         // update cache if present
         for (CacheLine line : lines) {
             if (line.valid && line.tag == address) {
-                line.data = value;
+                line.data = value & 0xFFFF;
                 return;
             }
         }
     }
 
-    private void insert(int address, short value) {
+    private void insert(int address, int value) {
         // check invalid line
         for (CacheLine line : lines) {
             if (!line.valid) {
@@ -77,10 +77,10 @@ public class Cache extends Memory {
         fillLine(oldest, address, value);
     }
 
-    private void fillLine(CacheLine line, int address, short value) {
+    private void fillLine(CacheLine line, int address, int value) {
         line.valid = true;
         line.tag = address;
-        line.data = value;
+        line.data = value & 0xFFFF;
         line.age = fifoCounter++;
     }
 

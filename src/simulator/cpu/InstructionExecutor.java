@@ -196,7 +196,7 @@ public class InstructionExecutor {
                 return;
             }
             int value = regs.getGPR(inst.r).get();
-            memory.write(ea, (short)value);
+            memory.write(ea, value & 0xFFFF);
         } catch (RuntimeException e) {
             if (e.getMessage().equals("Invalid memory address")) {
                 handleMachineFault(0b1000); // 1000 binary for address beyond 2048
@@ -240,7 +240,7 @@ public class InstructionExecutor {
                 return;
             }
             int value = regs.getIX(inst.ix).get(); //change from .r to .ix
-            memory.write(ea, (short)value);
+            memory.write(ea, value & 0xFFFF);
         } catch (RuntimeException e) {
             if (e.getMessage().equals("Invalid memory address")) {
                 handleMachineFault(0b1000);
@@ -382,9 +382,13 @@ public class InstructionExecutor {
     }
 */
     private void executeJSR(Instruction inst) {
-    int target = inst.address;                 // absolute 10-bit address
-    regs.getGPR(3).set(regs.getPC().get() + 1);
-    regs.getPC().set(target);
+    //int target = inst.address;                 // absolute 10-bit address
+    //regs.getGPR(3).set(regs.getPC().get() + 1);
+    //regs.getPC().set(target);
+
+    int ea = eaCalc.computeEA(inst, regs, memory);   // ⭐ compute effective address
+    regs.getGPR(3).set(regs.getPC().get());          // ⭐ save return address
+    regs.getPC().set(ea);
     }
 
     //return from subroutine with return code as immed portion (optional) stored in instructions's addr field
@@ -588,6 +592,9 @@ public class InstructionExecutor {
     private void executeCHK(Instruction inst) {
         int status = cpu.getIODevice().getStatus();
         regs.getGPR(inst.r).set(status);
+
+        regs.setCCBit(0, status);
+        System.out.println("CHK: status=" + status);
     }
 
     /*
@@ -598,6 +605,7 @@ public class InstructionExecutor {
     4 Store PC for machine fault. Similar to location 2
     5 Not used*/
 
+/* 
     //traps to memory address 0
     private void executeTRAP(Instruction inst) {
         int trapCode = inst.address;//mask value after to check if it's 0-15
@@ -609,21 +617,50 @@ public class InstructionExecutor {
         trapCode = trapCode & 0xF;
         // save PC to 2
         int currentPC = regs.getPC().get();
-        memory.write(2, (short)(currentPC + 1));
+        memory.write(2, (currentPC + 1) & 0xFFFF); // save next instruction address for return
         // save trap code to 3
-        memory.write(3, (short) trapCode);
+        memory.write(3, (trapCode & 0xFFFF));
         // load PC from 0
         int handlerAddr = memory.read(0);
         regs.getPC().set(handlerAddr);
     }
+*/
+
+
+    private void executeTRAP(Instruction inst) {
+    int trapCode = inst.address & 0xF;  // low 4 bits
+
+    if (trapCode < 0 || trapCode > 15) {
+        handleMachineFault(0b0010); // illegal TRAP code
+        return;
+    }
+
+    // save PC to 2 (return address)
+    int currentPC = regs.getPC().get();
+    memory.write(2, (currentPC + 1) & 0xFFFF);
+
+    // save trap code to 3 (optional, if program uses it)
+    memory.write(3, trapCode & 0xFFFF);
+
+    // read trap table base from location 0
+    int tableBase = memory.read(0) & 0x3FF;
+
+    // get specific handler address from tableBase + trapCode
+    int handlerAddr = memory.read(tableBase + trapCode) & 0x3FF;
+
+    // jump to handler
+    regs.getPC().set(handlerAddr);
+}
+
+
     // Handle machine fault: save PC to 4, MFR to 5, load PC from 1
     private void handleMachineFault(int mfrValue) {
         regs.MFR.set(mfrValue);
         // save PC to 4
         int currentPC = regs.getPC().get();
-        memory.write(4, (short) currentPC);
+        memory.write(4, (currentPC & 0xFFFF));
         // save MFR to 5
-        memory.write(5, (short) mfrValue);
+        memory.write(5, mfrValue & 0xFFFF);
         // load PC from 1
         int handlerAddr = memory.read(1);
         regs.getPC().set(handlerAddr);

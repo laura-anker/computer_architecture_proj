@@ -46,7 +46,7 @@ public class ProgramLoader {
                     int value   = Integer.parseInt(parts[1], 8);
 
                     //store value at address in memory
-                    memory.write(address, (short) value);
+                    memory.write(address, value & 0xFFFF);
 
                     System.out.println("Loaded @" + parts[0] + " = " + parts[1]);
 
@@ -66,7 +66,7 @@ public class ProgramLoader {
                     e.printStackTrace();
                 }
             }
-
+/* 
             //initialize TRAP table
             int trapTableBase = 0100; // base address for TRAP routines, may need to be changed later?? idk if it'll conflict with loaded programs, but we can change it if it does
 
@@ -78,8 +78,8 @@ public class ProgramLoader {
                 memory.write(trapTableBase + i, (short) 0300); // default routine
             }
             //initialize machine fault handler
-            int faultHandlerBase = 0200; // base address for fault handler
-            memory.write(1, (short) faultHandlerBase);
+*/            //int faultHandlerBase = 0200; // base address for fault handler
+            memory.write(1, 0200);
             // perhaps initialize some fault handling code, but for now, just set address
 
             return startAddress;

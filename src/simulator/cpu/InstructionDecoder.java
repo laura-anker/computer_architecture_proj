@@ -5,7 +5,7 @@ import simulator.instruction.Opcode;
 
 public class InstructionDecoder {
 
-    public Instruction decode(short word) {
+    public Instruction decode(int word) {
 
         int w = word & 0xFFFF;   // treat instruction as unsigned
 
@@ -41,7 +41,7 @@ public class InstructionDecoder {
                 inst.r       = (w >> 8) & 0x3;
                 inst.ix      = (w >> 6) & 0x3;
                 inst.i       = (w >> 5) & 0x1;
-                inst.address =  w       & 0x1F;
+                inst.address =  w       & 0x3FF;
                 //inst.address = w & 0xFFF;   // full 12-bit address
 
 
@@ -59,7 +59,7 @@ public class InstructionDecoder {
 
                 inst.ix      = (w >> 6) & 0x3;
                 inst.i       = (w >> 5) & 0x1;
-                inst.address =  w       & 0x1F;
+                inst.address =  w       & 0x3FF;
                 //inst.address = w & 0xFFF;   // full 12-bit address
 
                 break;
@@ -72,7 +72,7 @@ public class InstructionDecoder {
             case Opcode.SIR:
 
                 inst.r       = (w >> 8) & 0x3;
-                inst.address =  w       & 0x1F;
+                inst.address =  w       & 0x3FF;
 
                 break;
 

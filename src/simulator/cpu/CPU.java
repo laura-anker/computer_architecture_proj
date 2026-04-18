@@ -48,6 +48,9 @@ public class CPU {
             Integer.toOctalString(registers.PC.get())
         );
 
+        System.out.printf("DEBUG after load: mem[256] = %o\n", memory.read(0256));
+
+
         fetch();
         Instruction inst = decode();
         boolean cont = execute(inst);
@@ -67,7 +70,7 @@ public class CPU {
 
         registers.MAR.set(registers.PC.get()); //mem addr reg points to next instruction
 
-        short word = memory.read(registers.MAR.get()); //read the instruction
+        int word = memory.read(registers.MAR.get()) & 0xFFFF; //read the instruction
         registers.MBR.set(word); //store it in the memory buffer reg
 
         registers.IR.set(word); //copy into instruction register and store for decoding
@@ -76,7 +79,7 @@ public class CPU {
     }
 
     private Instruction decode() {
-        return decoder.decode((short) registers.IR.get()); //turns binary from IR to the instruction object to use in execute
+        return decoder.decode(registers.IR.get()); //turns binary from IR to the instruction object to use in execute
     }
 
     //To do

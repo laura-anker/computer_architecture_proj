@@ -1,0 +1,521 @@
+; Program 2
+; Reads a fixed paragraph of 6 sentences from memory,
+; prints them, then asks the user for a word.
+; If the word appears in the paragraph, prints:
+;   FOUND <word>
+;   sentence number (1..6)
+;   word number in that sentence (1..N)
+; Otherwise prints: NOT FOUND
+
+; ----------------------------------------------------
+; Low-memory constants and pointers
+; ----------------------------------------------------
+        LOC 6
+ZERO:       Data 0               ; 6
+ONE:        Data 1               ; 7
+SPACE:      Data 32              ; 8  ' '
+NL:         Data 10              ; 9  '\n'
+ASC0:       Data 48              ; 10 '0'
+
+PARBAS:     Data 200             ; 11 paragraph base (first sentence)
+SCRBAS:     Data 70              ; 12 scratch base
+JTBAS:      Data 500             ; 13 jump-table base
+WORDBAS:    Data 40              ; 14 word buffer base
+
+MSGWORDP:   Data 550             ; 15 "ENTER WORD: "
+MSGFOUNDp:  Data 570             ; 16 "FOUND "
+MSGNFp:     Data 580             ; 17 "NOT FOUND"
+
+; ----------------------------------------------------
+; Word buffer (user input word)
+; ----------------------------------------------------
+        LOC 40
+        Data 0
+        Data 0
+        Data 0
+        Data 0
+        Data 0
+        Data 0
+        Data 0
+        Data 0
+        Data 0
+        Data 0
+        Data 0
+        Data 0
+        Data 0
+        Data 0
+        Data 0
+        Data 0
+        Data 0
+        Data 0
+        Data 0
+        Data 0
+
+; ----------------------------------------------------
+; Scratch region, addressed relative to X2 = SCRBAS (70)
+; +0  sentence index (0..5)
+; +1  word index in sentence (0..N-1)
+; +2  current sentence pointer
+; +3  scan pointer in sentence
+; +4  temp char
+; +5  temp
+; +6  temp
+; +7  temp
+; +8  print value
+; +9  print count
+; +10 print pointer
+; ----------------------------------------------------
+        LOC 70
+        Data 0      ; +0
+        Data 0      ; +1
+        Data 0      ; +2
+        Data 0      ; +3
+        Data 0      ; +4
+        Data 0      ; +5
+        Data 0      ; +6
+        Data 0      ; +7
+        Data 0      ; +8
+        Data 0      ; +9
+        Data 0      ; +10
+        Data 0
+        Data 0
+        Data 0
+        Data 0
+        Data 0
+        Data 0
+        Data 0
+        Data 0
+        Data 0
+        Data 0
+
+; ----------------------------------------------------
+; Code
+; ----------------------------------------------------
+        LOC 100
+Start:  LDX 2,12,0              ; X2 <- SCRBAS (70)
+        LDX 3,13,0              ; X3 <- JTBAS (500)
+
+; ----------------- Print all 6 sentences -----------------
+        LDR 0,0,6,0             ; R0 <- ZERO
+        STR 0,2,0,0             ; scratch+0 = sentence index = 0
+
+PrintAllLoop:
+        LDR 0,2,0,0             ; R0 = sentence index
+        SIR 0,6                 ; R0 = index - 6
+        JGE 0,3,2,0             ; if index >= 6, done printing
+
+        ; load sentence pointer into scratch+2
+        LDR 0,2,0,0             ; R0 = sentence index
+        JZ 0,3,3,0              ; if 0 -> SENT0
+        SIR 0,1
+        JZ 0,3,4,0              ; if 1 -> SENT1
+        SIR 0,1
+        JZ 0,3,5,0              ; if 2 -> SENT2
+        SIR 0,1
+        JZ 0,3,6,0              ; if 3 -> SENT3
+        SIR 0,1
+        JZ 0,3,7,0              ; if 4 -> SENT4
+        JMA 3,8,0               ; else -> SENT5
+
+; JT entries will map:
+; JT3 -> PrintS0
+; JT4 -> PrintS1
+; JT5 -> PrintS2
+; JT6 -> PrintS3
+; JT7 -> PrintS4
+; JT8 -> PrintS5
+
+PrintS0:
+        LDA 0,SENT0,0
+        STR 0,2,2,0
+        JMA 3,9,1
+
+PrintS1:
+        LDA 0,SENT1,0
+        STR 0,2,2,0
+        JMA 3,9,1
+
+PrintS2:
+        LDA 0,SENT2,0
+        STR 0,2,2,0
+        JMA 3,9,1
+
+PrintS3:
+        LDA 0,SENT3,0
+        STR 0,2,2,0
+        JMA 3,9,1
+
+PrintS4:
+        LDA 0,SENT4,0
+        STR 0,2,2,0
+        JMA 3,9,1
+
+PrintS5:
+        LDA 0,SENT5,0
+        STR 0,2,2,0
+
+DoPrintSentence:
+        ; scratch+2 holds sentence pointer
+        LDR 0,2,2,0
+        STR 0,2,10,0           ; reuse PrintStr interface: scratch+10 = pointer
+        JSR 3,26,1             ; PrintStr
+
+        LDR 0,0,9,0            ; newline
+        OUT 0,1
+
+        ; increment sentence index
+        LDR 0,2,0,0
+        AIR 0,1
+        STR 0,2,0,0
+        JMA 3,0,1              ; back to PrintAllLoop
+
+AfterPrintAll:
+        ; ----------------- Prompt for word -----------------
+        LDR 0,0,15,0           ; MSGWORDP
+        STR 0,2,10,0
+        JSR 3,26,1             ; PrintStr
+
+        ; read word into WORDBUF
+        JSR 3,10,1             ; ReadWord
+
+        ; ----------------- Search paragraph -----------------
+        LDR 0,0,6,0
+        STR 0,2,0,0            ; sentence index = 0
+
+SentenceLoop:
+        LDR 0,2,0,0
+        SIR 0,6
+        JGE 0,3,11,1           ; if index >= 6 -> NotFound
+
+        ; set sentence pointer in scratch+2
+        LDR 0,2,0,0
+        JZ 0,3,3,1
+        SIR 0,1
+        JZ 0,3,4,1
+        SIR 0,1
+        JZ 0,3,5,1
+        SIR 0,1
+        JZ 0,3,6,1
+        SIR 0,1
+        JZ 0,3,7,1
+        JMA 3,8,1
+
+AfterSetSentence:
+        ; word index in sentence = 0
+        LDR 0,0,6,0
+        STR 0,2,1,0
+
+        ; scan pointer = sentence pointer
+        LDR 0,2,2,0
+        STR 0,2,3,0
+
+WordLoop:
+        ; skip spaces
+SkipSpaces:
+        LDR 0,2,3,1
+        JZ 0,3,12,1            ; end of sentence -> next sentence
+        SMR 0,0,8,0            ; char - SPACE
+        JNE 0,3,13,1           ; if not space, done skipping
+        LDR 0,2,3,0
+        AIR 0,1
+        STR 0,2,3,0
+        JMA 3,14,1
+
+AfterSkipSpaces:
+        ; check end of sentence again
+        LDR 0,2,3,1
+        JZ 0,3,12,1
+
+        ; we are at start of a word
+        ; compare with WORDBUF
+        JSR 3,20,1             ; CompareWord
+        JZ 0,3,15,1            ; if equal -> Found
+
+        ; not equal: skip this word
+        JSR 3,21,1             ; SkipWord
+
+        ; increment word index
+        LDR 0,2,1,0
+        AIR 0,1
+        STR 0,2,1,0
+
+        ; continue in this sentence
+        JMA 3,16,1
+
+NextSentence:
+        ; increment sentence index
+        LDR 0,2,0,0
+        AIR 0,1
+        STR 0,2,0,0
+        JMA 3,1,1              ; back to SentenceLoop
+
+NotFound:
+        LDR 0,0,17,0           ; MSGNFp
+        STR 0,2,10,0
+        JSR 3,26,1             ; PrintStr
+        HLT
+
+Found:
+        ; print "FOUND "
+        LDR 0,0,16,0           ; MSGFOUNDp
+        STR 0,2,10,0
+        JSR 3,26,1
+
+        ; print the word (WORDBUF)
+        LDR 0,0,14,0           ; WORDBAS
+        STR 0,2,10,0
+        JSR 3,26,1
+
+        LDR 0,0,9,0
+        OUT 0,1
+
+        ; print sentence number (1-based)
+        LDR 0,2,0,0
+        AIR 0,1
+        STR 0,2,8,0            ; scratch+8 = value
+        JSR 3,24,1             ; PrintNum (from P1 style)
+
+        LDR 0,0,9,0
+        OUT 0,1
+
+        ; print word number (1-based)
+        LDR 0,2,1,0
+        AIR 0,1
+        STR 0,2,8,0
+        JSR 3,24,1
+
+        LDR 0,0,9,0
+        OUT 0,1
+
+        HLT
+
+; ----------------------------------------------------
+; ReadWord: read a space/newline-terminated word into WORDBUF
+; Uses WORDBAS, scratch+4 as temp char
+; ----------------------------------------------------
+ReadWord:
+        ; clear buffer first char
+        LDR 0,0,6,0
+        LDR 1,0,14,0           ; WORDBAS
+        STR 0,1,0,0
+
+ReadWordWait:
+        IN 0,0
+        STR 0,2,4,0
+        SMR 0,0,8,0            ; char - SPACE
+        JZ 0,3,10,1            ; still skipping spaces
+        LDR 0,2,4,0
+        SMR 0,0,9,0            ; char - NL
+        JZ 0,3,10,1
+        JMA 3,17,1             ; first non-space char
+
+ReadWordBody:
+        ; X1 points into WORDBUF
+        LDR 1,0,14,0
+
+ReadWordLoop:
+        IN 0,0
+        STR 0,2,4,0
+        SMR 0,0,8,0
+        JZ 0,3,18,1            ; space -> end
+        LDR 0,2,4,0
+        SMR 0,0,9,0
+        JZ 0,3,18,1            ; newline -> end
+
+        LDR 0,2,4,0
+        STR 0,1,0,0
+        LDR 0,1,0,0
+        AIR 0,1
+        STR 0,1,0,0
+        JMA 3,19,1
+
+ReadWordDone:
+        LDR 0,0,6,0
+        STR 0,1,0,0
+        RFS 0
+
+; ----------------------------------------------------
+; CompareWord: compare WORDBUF with word at scratch+3
+; Returns R0 = 0 if equal, nonzero otherwise
+; ----------------------------------------------------
+CompareWord:
+        LDR 1,0,14,0           ; R1 = WORDBAS
+        LDR 2,2,3,0            ; R2 = scan pointer
+
+CmpLoop:
+        LDR 0,1,0,0            ; char from WORDBUF
+        LDR 3,2,3,1            ; char from sentence
+        SMR 0,3,0,0
+        JNE 0,3,20,1           ; mismatch
+        JZ 0,3,22,1            ; both zero -> match
+        LDR 4,1,0,0
+        AIR 4,1
+        STR 4,1,0,0
+        LDR 4,2,3,0
+        AIR 4,1
+        STR 4,2,3,0
+        JMA 3,21,1
+
+CmpFail:
+        LDR 0,0,7,0            ; ONE
+        RFS 0
+
+CmpOK:
+        LDR 0,0,6,0            ; ZERO
+        RFS 0
+
+; ----------------------------------------------------
+; SkipWord: starting at scratch+3, skip non-space chars
+; leaves scratch+3 at first space or zero
+; ----------------------------------------------------
+SkipWord:
+SkipWordLoop:
+        LDR 0,2,3,1
+        JZ 0,3,23,1
+        SMR 0,0,8,0
+        JZ 0,3,23,1
+        LDR 1,2,3,0
+        AIR 1,1
+        STR 1,2,3,0
+        JMA 3,21,1
+
+SkipWordDone:
+        RFS 0
+
+; ----------------------------------------------------
+; PrintNum: signed decimal from scratch+8
+; (copied style from Program 1: uses scratch+8..+10)
+; ----------------------------------------------------
+PrintNum:
+        LDR 0,2,8,0
+        JNE 0,3,24,1
+        LDR 0,0,10,0           ; '0'
+        OUT 0,1
+        RFS 0
+
+PrintNonZero2:
+        JGE 0,3,25,1
+        LDR 0,0,11,0           ; ASCMIN from P1 if you want, or reuse
+        OUT 0,1
+        LDR 0,2,8,0
+        NOT 0
+        AIR 0,1
+        STR 0,2,8,0
+
+PrintPositiveSetup2:
+        LDR 0,0,6,0
+        STR 0,2,9,0
+        LDR 0,0,21,0           ; DIGBAS if you reuse P1 layout, or adjust
+        STR 0,2,10,0
+
+PrintLoop2:
+        LDR 0,2,8,0
+        LDR 2,0,8,0            ; TEN
+        DVD 0,2
+        STR 0,2,8,0
+        STR 1,2,5,0
+
+        LDR 0,0,10,0
+        AMR 0,2,5,0
+        STR 0,2,10,1
+
+        LDR 0,2,10,0
+        AIR 0,1
+        STR 0,2,10,0
+
+        LDR 0,2,9,0
+        AIR 0,1
+        STR 0,2,9,0
+
+        LDR 0,2,8,0
+        JNE 0,3,26,1
+
+PrintOut2:
+        LDR 0,2,10,0
+        SIR 0,1
+        STR 0,2,10,0
+        LDR 0,2,10,1
+        OUT 0,1
+
+        LDR 0,2,9,0
+        SIR 0,1
+        STR 0,2,9,0
+        JNE 0,3,27,1
+        RFS 0
+
+; ----------------------------------------------------
+; PrintStr: zero-terminated string whose address is in scratch+10
+; (same style as Program 1)
+; ----------------------------------------------------
+PrintStr:
+        LDR 0,2,10,0
+        STR 0,2,3,0
+
+PrintStrLoop:
+        LDR 0,2,3,1
+        JZ 0,3,28,1
+        OUT 0,1
+        LDR 0,2,3,0
+        AIR 0,1
+        STR 0,2,3,0
+        JMA 3,29,1
+
+PrintStrDone:
+        RFS 0
+
+; ----------------------------------------------------
+; Paragraph sentences (zero-terminated)
+; ----------------------------------------------------
+        LOC 200
+SENT0:  Data 84,104,105,115,32,105,115,32,115,101,110,116,101,110,99,101,32,49,46,0
+SENT1:  Data 84,104,105,115,32,105,115,32,115,101,110,116,101,110,99,101,32,50,46,0
+SENT2:  Data 84,104,105,115,32,105,115,32,115,101,110,116,101,110,99,101,32,51,46,0
+SENT3:  Data 84,104,105,115,32,105,115,32,115,101,110,116,101,110,99,101,32,52,46,0
+SENT4:  Data 84,104,105,115,32,105,115,32,115,101,110,116,101,110,99,101,32,53,46,0
+SENT5:  Data 84,104,105,115,32,105,115,32,115,101,110,116,101,110,99,101,32,54,46,0
+
+; ----------------------------------------------------
+; Messages
+; ----------------------------------------------------
+        LOC 550
+MSGWORD:    Data 69,78,84,69,82,32,87,79,82,68,58,32,0      ; "ENTER WORD: "
+MSGFOUND:   Data 70,79,85,78,68,32,0                        ; "FOUND "
+MSGNF:      Data 78,79,84,32,70,79,85,78,68,10,0            ; "NOT FOUND\n"
+
+; ----------------------------------------------------
+; Jump-table entries, addressed relative to X3=500
+; (mirroring Program 1 style)
+; ----------------------------------------------------
+        LOC 500
+JT0:    Data PrintAllLoop      ; 0
+JT1:    Data SentenceLoop      ; 1
+JT2:    Data AfterPrintAll     ; 2
+JT3:    Data PrintS0           ; 3
+JT4:    Data PrintS1           ; 4
+JT5:    Data PrintS2           ; 5
+JT6:    Data PrintS3           ; 6
+JT7:    Data PrintS4           ; 7
+JT8:    Data PrintS5           ; 8
+JT9:    Data DoPrintSentence   ; 9
+JT10:   Data ReadWord          ; 10
+JT11:   Data NotFound          ; 11
+JT12:   Data NextSentence      ; 12
+JT13:   Data SkipSpaces        ; 13
+JT14:   Data AfterSkipSpaces   ; 14
+JT15:   Data WordLoop          ; 15
+JT16:   Data NextSentence      ; 16
+JT17:   Data ReadWordBody      ; 17
+JT18:   Data ReadWordDone      ; 18
+JT19:   Data ReadWordLoop      ; 19
+JT20:   Data CompareWord       ; 20
+JT21:   Data SkipWord          ; 21
+JT22:   Data CmpOK             ; 22
+JT23:   Data SkipWordDone      ; 23
+JT24:   Data PrintNum          ; 24
+JT25:   Data PrintNonZero2     ; 25
+JT26:   Data PrintStr          ; 26
+JT27:   Data PrintOut2         ; 27
+JT28:   Data PrintStrDone      ; 28
+JT29:   Data PrintStrLoop      ; 29
+JT30:   Data Found             ; 30
+JT31:   Data Start             ; 31

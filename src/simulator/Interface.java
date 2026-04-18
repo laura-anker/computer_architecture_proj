@@ -28,8 +28,10 @@ public class Interface extends JFrame implements IODevice{
         // create simulator backend
         memory = new simulator.memory.Memory();
         cache = new simulator.memory.Cache(memory);
-        cpu = new simulator.cpu.CPU(cache);
+        cpu = new simulator.cpu.CPU(memory);
         loader = new simulator.io.ProgramLoader();
+
+        cpu.setIODevice(this); //to work with GUI
         
         setTitle("CSCI 6461 Machine Simulator");
         setSize(1200, 700);
@@ -386,6 +388,10 @@ public class Interface extends JFrame implements IODevice{
             }
 
             int start = loader.load(file, memory);
+
+            //debug statement
+            System.out.printf("DEBUG after load: mem[256] = %o\n", memory.read(0256));
+            printerArea.append(String.format("DEBUG after load: mem[256] = %o\n", memory.read(0256)));
 
             cpu.getRegisters().PC.set(start);
 
